@@ -161,7 +161,7 @@ DisableNagle=0";
                         {
 
                         },
-                        Value = null
+                        Value = data?.dwData
                     };
                     SimData.DynamicInvoke(SimData, simVarVal);
                 }
@@ -181,7 +181,7 @@ DisableNagle=0";
             if (SimError != null)
                 try
                 {
-                    var ex = new IOException("SimConnext reported an Error", null);
+                    var ex = new IOException("SimConnect returned an Error, details in Data", null);
                     ex.Source = "SimConnect";
                     foreach(var property in data.GetType().GetProperties())
                     {
@@ -232,19 +232,22 @@ DisableNagle=0";
                 catch { }
         }
 
-        public static void SendRequest(SimConnectVariable request)
+        public static int SendRequest(SimConnectVariable request)
         {
             var unit = request.Unit;
             if (unit?.IndexOf("string") > -1)
             {
                 unit = null;
             }
+            // Fetch the values suitable for transmission to SimConnect
             var simReq = new SimVarRequest
             {
                 ID = RequestID++,
                 Request = request
             };
+            // Submit the SimVar request to SimConnect
             simConnect.AddToDataDefinition(simReq.DefID, request.Name, unit, simReq.SimType, 0.0f, SimConnect.SIMCONNECT_UNUSED);
+            // Tell SimConnect what type of value we are expecting to be returned
             switch (simReq.Type?.FullName)
             {
                 case "System.Double":
@@ -272,6 +275,23 @@ DisableNagle=0";
                     simConnect.RegisterDataDefineStruct<object>(simReq.DefID); // This will likely fail as variants don't transform well
                     break;
             }
+            return simReq.ID;
+        }
+
+        /// <summary>
+        /// Tell SimConnect to send the latest value for a specific variable request
+        /// </summary>
+        /// <param name="requestID">ID returned by SendRequest</param>
+        public static void FetchValueUpdate(int requestID)
+        {
+            try
+            {
+                simConnect?.RequestDataOnSimObjectType((SIMVARREQUEST)requestID, (SIMVARDEFINITION)requestID, 0, SIMCONNECT_SIMOBJECT_TYPE.USER);
+            }
+            catch// (Exception ex)
+            {
+                // Likely cause, no request for this variable has been received
+            }
         }
 
 
@@ -285,6 +305,7 @@ DisableNagle=0";
             if (msg.Msg == WM_USER_SIMCONNECT && simConnect != null)
                 try
                 {
+                    // SimConnect has something to tell us - ask it to raise the relevant event
                     simConnect.ReceiveMessage();
                 }
                 catch// (Exception ex)

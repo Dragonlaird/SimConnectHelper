@@ -28,14 +28,14 @@ namespace SimConnectHelper.Common
         {
             get
             {
-                return Enum.Parse<SIMVARREQUEST>(this.ID.ToString());
+                return (SIMVARREQUEST)this.ID;
             }
         }
         internal SIMVARDEFINITION DefID
         {
             get
             {
-                return Enum.Parse<SIMVARDEFINITION>(this.ID.ToString());
+                return (SIMVARDEFINITION)this.ID;
             }
         }
     }

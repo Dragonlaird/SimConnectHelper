@@ -20,6 +20,8 @@ namespace SimConnectHandler_Tests
         private const string MSFSServerName = "localhost";
         private const int MSFSServerPort = 500;
 
+        private SimConnectVariableValue result = null;
+
         [TestMethod]
         public void Connect_Test()
         {
@@ -37,23 +39,30 @@ namespace SimConnectHandler_Tests
         [TestMethod]
         public void RequestSimVar_Test()
         {
+            result = null;
             SimConnectHandler.SimError += SimConnect_Error;
             SimConnectHandler.SimConnected += SimConnect_Connection;
             SimConnectHandler.SimData += SimConnect_DataReceived;
             SimConnectHandler.Connect();
             var variable = new SimConnectVariable
             {
-                Name = "TITLE",
-                Unit = "string"
+                Name = "AIRSPEED INDICATED",
+                Unit = "knots"
             };
-            SimConnectHandler.SendRequest(variable);
-            Thread.Sleep(1000);
+            var requestID = SimConnectHandler.SendRequest(variable);
+            SimConnectHandler.FetchValueUpdate(requestID);
 
+            // Wait for MSFS to return the requested value
+            DateTime endTime = DateTime.Now.AddSeconds(60);
+            while(result == null && DateTime.Now < endTime){
+                Thread.Sleep(1000);
+            }
+            Assert.IsNotNull(result);
         }
 
         private void SimConnect_DataReceived(object sender, SimConnectVariableValue e)
         {
-            throw new NotImplementedException();
+            result = e;
         }
 
         private void SimConnect_Connection(object sender, bool e)
