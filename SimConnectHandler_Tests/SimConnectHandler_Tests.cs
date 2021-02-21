@@ -7,14 +7,15 @@ using System.Security.Cryptography.X509Certificates;
 
 namespace SimConnectHandler_Tests
 {
+    /// <summary>
+    /// Tests will only succeed if MSFS 2020 is currently running
+    /// </summary>
     [TestClass]
     public class SimConnectHandler_Tests
     {
         private const string MSFSServerName = "localhost";
         private const int MSFSServerPort = 500;
-        /// <summary>
-        /// Connect_Test will only pass if MSFS 2020 is running locally
-        /// </summary>
+
         [TestMethod]
         public void Connect_Test()
         {
@@ -22,9 +23,6 @@ namespace SimConnectHandler_Tests
             Assert.IsTrue(SimConnectHandler.FSConnected);
         }
 
-        /// <summary>
-        /// ConnectIP_Test will only pass if MSFS 2020 is running on the remote IP (and the firewall on that PC permits access)
-        /// </summary>
         [TestMethod]
         public void ConnectIP_Test()
         {

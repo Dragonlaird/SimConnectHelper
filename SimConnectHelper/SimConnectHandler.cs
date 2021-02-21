@@ -23,6 +23,7 @@ namespace SimConnectHelper
         private static EndPoint endPoint;
         private static SimConnect simConnect = null;
         private const int WM_USER_SIMCONNECT = 0x0402;
+        private static int RequestID = 0;
         public static bool UseFSXcompatibleConnection { get; set; } = false;
         public static bool FSConnected { get; private set; } = false;
 
@@ -229,6 +230,48 @@ DisableNagle=0";
                     SimConnected.DynamicInvoke(SimData, false);
                 }
                 catch { }
+        }
+
+        public static void SendRequest(SimConnectVariable request)
+        {
+            var unit = request.Unit;
+            if (unit?.IndexOf("string") > -1)
+            {
+                unit = null;
+            }
+            var simReq = new SimVarRequest
+            {
+                ID = RequestID++,
+                Request = request
+            };
+            simConnect.AddToDataDefinition(simReq.DefID, request.Name, unit, simReq.SimType, 0.0f, SimConnect.SIMCONNECT_UNUSED);
+            switch (simReq.Type?.FullName)
+            {
+                case "System.Double":
+                    simConnect.RegisterDataDefineStruct<double>(simReq.DefID);
+                    break;
+                case "System.UInt16":
+                case "System.UInt32":
+                case "System.UInt64":
+                    simConnect.RegisterDataDefineStruct<uint>(simReq.DefID);
+                    break;
+                case "System.Int16":
+                case "System.Int32":
+                    simConnect.RegisterDataDefineStruct<int>(simReq.DefID);
+                    break;
+                case "System.Boolean":
+                    simConnect.RegisterDataDefineStruct<bool>(simReq.DefID);
+                    break;
+                case "System.Byte":
+                    simConnect.RegisterDataDefineStruct<byte>(simReq.DefID);
+                    break;
+                case "System.String":
+                    simConnect.RegisterDataDefineStruct<SimVarString>(simReq.DefID);
+                    break;
+                default:
+                    simConnect.RegisterDataDefineStruct<object>(simReq.DefID); // This will likely fail as variants don't transform well
+                    break;
+            }
         }
 
 
