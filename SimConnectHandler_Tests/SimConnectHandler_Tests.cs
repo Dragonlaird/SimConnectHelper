@@ -23,9 +23,16 @@ namespace SimConnectHandler_Tests
         private SimConnectVariableValue result = null;
 
         [TestMethod]
-        public void Connect_Test()
+        public void ConnectDirect_Test()
         {
             SimConnectHandler.Connect();
+            Assert.IsTrue(SimConnectHandler.FSConnected);
+        }
+
+        [TestMethod]
+        public void ConnectDirectNoConfig_Test()
+        {
+            SimConnectHandler.Connect(false);
             Assert.IsTrue(SimConnectHandler.FSConnected);
         }
 
@@ -49,8 +56,7 @@ namespace SimConnectHandler_Tests
                 Name = "AIRSPEED INDICATED",
                 Unit = "knots"
             };
-            var requestID = SimConnectHandler.SendRequest(variable);
-            SimConnectHandler.FetchValueUpdate(requestID);
+            var requestID = SimConnectHandler.SendRequest(variable, true);
 
             // Wait for MSFS to return the requested value
             DateTime endTime = DateTime.Now.AddSeconds(60);

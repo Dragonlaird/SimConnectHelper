@@ -32,11 +32,11 @@ namespace SimConnectHelper
         /// </summary>
         public static EventHandler<bool> SimConnected;
         /// <summary>
-        /// Called whenever SimConeect receives an error from MSFS 2020
+        /// Called whenever SimConnect receives an error from MSFS 2020
         /// </summary>
         public static EventHandler<IOException> SimError;
         /// <summary>
-        /// Called whenever MSFS 2020 transmits requested data about an object (e.g. SimVar)
+        /// Called whenever MSFS 2020 transmits requested data about an object (e.g. SimVar result)
         /// </summary>
         public static EventHandler<SimConnectVariableValue> SimData;
 
@@ -82,9 +82,20 @@ namespace SimConnectHelper
             messagePump = null;
         }
 
-        private static void DeleteConfigFile()
+        /// <summary>
+        /// Will attempt to delete an existing SimConnect.cfg file, if not in use
+        /// </summary>
+        /// 
+        private static bool DeleteConfigFile()
         {
-
+            var filePath = Path.Combine(Environment.CurrentDirectory, "SimConnect.cfg");
+            if (File.Exists(filePath))
+                try
+                {
+                    File.Delete(filePath);
+                }
+                catch { return false; }
+            return true;
         }
 
         private static void CreateConfigFile()
@@ -232,7 +243,13 @@ DisableNagle=0";
                 catch { }
         }
 
-        public static int SendRequest(SimConnectVariable request)
+        /// <summary>
+        /// Request a SimVariable from SimConnect, optionally start capturing values
+        /// </summary>
+        /// <param name="request">SimVar to fetch from SimConnect</param>
+        /// <param name="FetchImmediately">TRUE = Retrieve latest value and return via SimData event; FALSE = Submit Request but do not return the current value yet</param>
+        /// <returns>A unique ID for the submitted request. Use this to request the next value via FetchValueUpdate</returns>
+        public static int SendRequest(SimConnectVariable request, bool FetchImmediately = false)
         {
             var unit = request.Unit;
             if (unit?.IndexOf("string") > -1)
@@ -275,11 +292,13 @@ DisableNagle=0";
                     simConnect.RegisterDataDefineStruct<object>(simReq.DefID); // This will likely fail as variants don't transform well
                     break;
             }
+            if (FetchImmediately)
+                FetchValueUpdate(simReq.ID); // Request value to be sent back immediately
             return simReq.ID;
         }
 
         /// <summary>
-        /// Tell SimConnect to send the latest value for a specific variable request
+        /// Tell SimConnect to start capturing values for a specific variable request and raise an event each time the value changes
         /// </summary>
         /// <param name="requestID">ID returned by SendRequest</param>
         public static void FetchValueUpdate(int requestID)
