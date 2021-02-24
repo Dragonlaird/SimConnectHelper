@@ -24,6 +24,7 @@ namespace SimConnectHelper
         private static SimConnect simConnect = null;
         private const int WM_USER_SIMCONNECT = 0x0402;
         private static int RequestID = 0;
+        private static Dictionary<int, SimConnectVariable> Requests = new Dictionary<int, SimConnectVariable>();
         public static bool UseFSXcompatibleConnection { get; set; } = false;
         public static bool FSConnected { get; private set; } = false;
 
@@ -168,10 +169,7 @@ DisableNagle=0";
                 {
                     var simVarVal = new SimConnectVariableValue
                     {
-                        Request = new SimConnectVariable
-                        {
-
-                        },
+                        Request = Requests[(int)data.dwRequestID],
                         Value = data?.dwData
                     };
                     SimData.DynamicInvoke(SimData, simVarVal);
@@ -251,50 +249,60 @@ DisableNagle=0";
         /// <returns>A unique ID for the submitted request. Use this to request the next value via FetchValueUpdate</returns>
         public static int SendRequest(SimConnectVariable request, bool FetchImmediately = false)
         {
-            var unit = request.Unit;
-            if (unit?.IndexOf("string") > -1)
+            if (FSConnected)
             {
-                unit = null;
+                var unit = request.Unit;
+                if (unit?.IndexOf("string") > -1)
+                {
+                    unit = null;
+                }
+                // Fetch the values suitable for transmission to SimConnect
+                var simReq = new SimVarRequest
+                {
+                    ID = RequestID++,
+                    Request = request
+                };
+                if (!Requests.Any(x => x.Value.Name == request.Name && x.Value.Unit == request.Unit))
+                {
+                    // New SimVar requested - add it to our list
+                    lock (Requests)
+                        Requests.Add((int)simReq.ReqID, simReq.Request);
+                }
+                // Submit the SimVar request to SimConnect
+                simConnect.AddToDataDefinition(simReq.DefID, request.Name, unit, simReq.SimType, 0.0f, SimConnect.SIMCONNECT_UNUSED);
+                // Tell SimConnect what type of value we are expecting to be returned
+                switch (simReq.Type?.FullName)
+                {
+                    case "System.Double":
+                        simConnect.RegisterDataDefineStruct<double>(simReq.DefID);
+                        break;
+                    case "System.UInt16":
+                    case "System.UInt32":
+                    case "System.UInt64":
+                        simConnect.RegisterDataDefineStruct<uint>(simReq.DefID);
+                        break;
+                    case "System.Int16":
+                    case "System.Int32":
+                        simConnect.RegisterDataDefineStruct<int>(simReq.DefID);
+                        break;
+                    case "System.Boolean":
+                        simConnect.RegisterDataDefineStruct<bool>(simReq.DefID);
+                        break;
+                    case "System.Byte":
+                        simConnect.RegisterDataDefineStruct<byte>(simReq.DefID);
+                        break;
+                    case "System.String":
+                        simConnect.RegisterDataDefineStruct<SimVarString>(simReq.DefID);
+                        break;
+                    default:
+                        simConnect.RegisterDataDefineStruct<object>(simReq.DefID); // This will likely fail as variants don't transform well
+                        break;
+                }
+                if (FetchImmediately)
+                    FetchValueUpdate(simReq.ID); // Request value to be sent back immediately
+                return simReq.ID;
             }
-            // Fetch the values suitable for transmission to SimConnect
-            var simReq = new SimVarRequest
-            {
-                ID = RequestID++,
-                Request = request
-            };
-            // Submit the SimVar request to SimConnect
-            simConnect.AddToDataDefinition(simReq.DefID, request.Name, unit, simReq.SimType, 0.0f, SimConnect.SIMCONNECT_UNUSED);
-            // Tell SimConnect what type of value we are expecting to be returned
-            switch (simReq.Type?.FullName)
-            {
-                case "System.Double":
-                    simConnect.RegisterDataDefineStruct<double>(simReq.DefID);
-                    break;
-                case "System.UInt16":
-                case "System.UInt32":
-                case "System.UInt64":
-                    simConnect.RegisterDataDefineStruct<uint>(simReq.DefID);
-                    break;
-                case "System.Int16":
-                case "System.Int32":
-                    simConnect.RegisterDataDefineStruct<int>(simReq.DefID);
-                    break;
-                case "System.Boolean":
-                    simConnect.RegisterDataDefineStruct<bool>(simReq.DefID);
-                    break;
-                case "System.Byte":
-                    simConnect.RegisterDataDefineStruct<byte>(simReq.DefID);
-                    break;
-                case "System.String":
-                    simConnect.RegisterDataDefineStruct<SimVarString>(simReq.DefID);
-                    break;
-                default:
-                    simConnect.RegisterDataDefineStruct<object>(simReq.DefID); // This will likely fail as variants don't transform well
-                    break;
-            }
-            if (FetchImmediately)
-                FetchValueUpdate(simReq.ID); // Request value to be sent back immediately
-            return simReq.ID;
+            return -1;
         }
 
         /// <summary>

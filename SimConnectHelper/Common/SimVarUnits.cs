@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace SimConnectHelper.Common
 {
-    internal class SimVarUnits
+    public class SimVarUnits
     {
         internal static readonly Dictionary<string, SimVarDefinition> DefaultUnits = new Dictionary<string, SimVarDefinition>
         {
