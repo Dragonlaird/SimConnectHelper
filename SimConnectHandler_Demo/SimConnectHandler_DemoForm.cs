@@ -28,6 +28,7 @@ namespace SimConnectHandler_DemoForm
             cmbVariable.DataSource = new SimConnectHelper.Common.SimVarList().ToList();
             cmbVariable.DisplayMember = "Key";
             cmbVariable.ValueMember = "Value";
+            dgVariables.Rows.Clear();
         }
 
         private void pbConnect_Click(object sender, EventArgs e)

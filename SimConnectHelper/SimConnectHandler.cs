@@ -306,6 +306,32 @@ DisableNagle=0";
         }
 
         /// <summary>
+        /// Allows cancelling of a previously requested variable, if it is no-longer needed
+        /// </summary>
+        /// <param name="request">SimVar Request to cancel</param>
+        public static bool CancelRequest(SimConnectVariable request)
+        {
+            var result = false;
+            if (simConnect != null && FSConnected && Requests.Any(x => x.Value.Name == request.Name && x.Value.Unit == request.Unit))
+            {
+                lock (Requests)
+                {
+                    try
+                    {
+                        var submittedRequest = Requests.First(x => x.Value.Name == request.Name && x.Value.Unit == request.Unit);
+                        var requestId = submittedRequest.Key;
+                        simConnect.ClearDataDefinition((SIMVARDEFINITION)requestId);
+                        simConnect.ClearClientDataDefinition((SIMVARDEFINITION)requestId);
+                        Requests.Remove(requestId);
+                        result = true;
+                    }
+                    catch { }
+                }
+            }
+            return result;
+        }
+
+        /// <summary>
         /// Tell SimConnect to start capturing values for a specific variable request and raise an event each time the value changes
         /// </summary>
         /// <param name="requestID">ID returned by SendRequest</param>

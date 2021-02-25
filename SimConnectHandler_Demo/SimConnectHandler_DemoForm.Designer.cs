@@ -199,6 +199,8 @@ namespace SimConnectHandler_DemoForm
             // 
             // dgVariables
             // 
+            this.dgVariables.AllowUserToAddRows = false;
+            this.dgVariables.AllowUserToDeleteRows = false;
             this.dgVariables.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
