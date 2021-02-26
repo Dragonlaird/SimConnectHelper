@@ -256,17 +256,30 @@ DisableNagle=0";
                 {
                     unit = null;
                 }
-                // Fetch the values suitable for transmission to SimConnect
-                var simReq = new SimVarRequest
+                SimVarRequest simReq;
+                lock (Requests)
                 {
-                    ID = RequestID++,
-                    Request = request
-                };
-                if (!Requests.Any(x => x.Value.Name == request.Name && x.Value.Unit == request.Unit))
-                {
-                    // New SimVar requested - add it to our list
-                    lock (Requests)
+                    if (Requests.Any(x => x.Value.Equals(request)))
+                    {
+                        // Re-use a previously requested variable for retransmission to SimConnect
+                        var reqId = Requests.First(x => x.Value.Name == request.Name && x.Value.Unit == request.Unit).Key;
+                        simReq = new SimVarRequest
+                        {
+                            ID = reqId,
+                            Request = request
+                        };
+                    }
+                    else
+                    {
+                        // Fetch the values suitable for transmission to SimConnect
+                        simReq = new SimVarRequest
+                        {
+                            ID = RequestID++,
+                            Request = request
+                        };
+                        // New SimVar requested - add it to our list
                         Requests.Add((int)simReq.ReqID, simReq.Request);
+                    }
                 }
                 // Submit the SimVar request to SimConnect
                 simConnect.AddToDataDefinition(simReq.DefID, request.Name, unit, simReq.SimType, 0.0f, SimConnect.SIMCONNECT_UNUSED);
@@ -339,7 +352,8 @@ DisableNagle=0";
         {
             try
             {
-                simConnect?.RequestDataOnSimObjectType((SIMVARREQUEST)requestID, (SIMVARDEFINITION)requestID, 0, SIMCONNECT_SIMOBJECT_TYPE.USER);
+                if (FSConnected)
+                    simConnect?.RequestDataOnSimObjectType((SIMVARREQUEST)requestID, (SIMVARDEFINITION)requestID, 0, SIMCONNECT_SIMOBJECT_TYPE.USER);
             }
             catch// (Exception ex)
             {
