@@ -47,7 +47,7 @@ namespace SimConnectHandler_DemoForm
             this.SimVarName = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.SimVarUnit = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.SimVarValue = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.Update = new System.Windows.Forms.DataGridViewButtonColumn();
+            this.SimVarUpdate = new System.Windows.Forms.DataGridViewButtonColumn();
             ((System.ComponentModel.ISupportInitialize)(this.txtSimConnectPort)).BeginInit();
             this.gpConnect.SuspendLayout();
             this.gpRequest.SuspendLayout();
@@ -210,7 +210,7 @@ namespace SimConnectHandler_DemoForm
             this.SimVarName,
             this.SimVarUnit,
             this.SimVarValue,
-            this.Update});
+            this.SimVarUpdate});
             this.dgVariables.EditMode = System.Windows.Forms.DataGridViewEditMode.EditProgrammatically;
             this.dgVariables.Location = new System.Drawing.Point(427, 12);
             this.dgVariables.MultiSelect = false;
@@ -247,14 +247,14 @@ namespace SimConnectHandler_DemoForm
             this.SimVarValue.Name = "SimVarValue";
             this.SimVarValue.ReadOnly = true;
             // 
-            // Update
+            // SimVarUpdate
             // 
-            this.Update.HeaderText = "Update";
-            this.Update.Name = "Update";
-            this.Update.Text = "Update";
-            this.Update.ToolTipText = "Update";
-            this.Update.UseColumnTextForButtonValue = true;
-            this.Update.Width = 50;
+            this.SimVarUpdate.HeaderText = "Update";
+            this.SimVarUpdate.Name = "SimVarUpdate";
+            this.SimVarUpdate.Text = "Update";
+            this.SimVarUpdate.ToolTipText = "Update";
+            this.SimVarUpdate.UseColumnTextForButtonValue = true;
+            this.SimVarUpdate.Width = 50;
             // 
             // SimConnectHandler_DemoForm
             // 
@@ -267,6 +267,7 @@ namespace SimConnectHandler_DemoForm
             this.Controls.Add(this.cbConnected);
             this.Name = "SimConnectHandler_DemoForm";
             this.Text = "SimConnect Test";
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.FormClose_Click);
             ((System.ComponentModel.ISupportInitialize)(this.txtSimConnectPort)).EndInit();
             this.gpConnect.ResumeLayout(false);
             this.gpConnect.PerformLayout();
@@ -298,6 +299,6 @@ namespace SimConnectHandler_DemoForm
         private System.Windows.Forms.DataGridViewTextBoxColumn SimVarName;
         private System.Windows.Forms.DataGridViewTextBoxColumn SimVarUnit;
         private System.Windows.Forms.DataGridViewTextBoxColumn SimVarValue;
-        private System.Windows.Forms.DataGridViewButtonColumn Update;
+        private System.Windows.Forms.DataGridViewButtonColumn SimVarUpdate;
     }
 }

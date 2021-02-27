@@ -33,14 +33,23 @@ namespace SimConnectHandler_DemoForm
 
         private void pbConnect_Click(object sender, EventArgs e)
         {
-            var server = txtSimConnectServer.Text;
-            var port = (int)txtSimConnectPort.Value;
-            IPAddress ipAddr = Dns.GetHostAddresses(server).FirstOrDefault(x => x.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork);
-            EndPoint ep = new IPEndPoint(ipAddr, port);
-            SimConnectHandler.Connect(ep);
-            SimConnectHandler.SimConnected += SimConnected;
-            SimConnectHandler.SimError += SimError;
-            SimConnectHandler.SimData += SimData;
+            if (!SimConnectHandler.FSConnected)
+            {
+                var server = txtSimConnectServer.Text;
+                var port = (int)txtSimConnectPort.Value;
+                IPAddress ipAddr = Dns.GetHostAddresses(server).FirstOrDefault(x => x.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork);
+                EndPoint ep = new IPEndPoint(ipAddr, port);
+                SimConnectHandler.Connect(ep);
+                SimConnectHandler.SimConnected += SimConnected;
+                SimConnectHandler.SimError += SimError;
+                SimConnectHandler.SimData += SimData;
+                pbConnect.Text = "Disconnect";
+            }
+            else
+            {
+                SimConnectHandler.Disconnect();
+                pbConnect.Text = "Connect";
+            }
         }
 
         private void SimData(object sender, SimConnectVariableValue e)
@@ -53,16 +62,26 @@ namespace SimConnectHandler_DemoForm
                     row.Cells["SimVarValue"].Value = e.Value?.ToString();
         }
 
+        /// <summary>
+        /// Called whenever SimConnect generates an error
+        /// </summary>
+        /// <param name="sender">SimConnect</param>
+        /// <param name="e">Exception containing SimConnect error data</param>
         private void SimError(object sender, IOException e)
         {
-            throw e;
+            //throw e;
         }
 
+        /// <summary>
+        /// Called whenever SimConnect changes connection state to MSFS 2020
+        /// </summary>
+        /// <param name="sender">SimConnect</param>
+        /// <param name="isConnected">True = Connect; False = Disconnected</param>
         private void SimConnected(object sender, bool isConnected)
         {
             if (cbConnected.InvokeRequired)
             {
-                cbConnected.Invoke(new Action(() => cbConnected.Checked = isConnected));
+                cbConnected.Invoke(new Action(() => SimConnected(sender, isConnected)));
                 return;
             }
             cbConnected.Checked = isConnected;
@@ -76,7 +95,7 @@ namespace SimConnectHandler_DemoForm
             foreach (DataGridViewRow row in dgVariables.Rows)
             {
                 var simVarName = row.Cells["SimVarName"].Value?.ToString();
-                var simVarUnit = row.Cells["SimVarValue"].Value?.ToString();
+                var simVarUnit = row.Cells["SimVarUnit"].Value?.ToString();
                 var request = new SimConnectVariable
                 {
                     Name = simVarName,
@@ -121,7 +140,7 @@ namespace SimConnectHandler_DemoForm
                     Name = simVarName,
                     Unit = simVarUnit
                 };
-                var reqId = SimConnectHandler.SendRequest(variableRequest, true);
+                var reqId = SendRequest(variableRequest, true);
                 dgVariables.Rows[rowIdx].Cells["ReqID"].Value = reqId;
             }
 
@@ -129,13 +148,34 @@ namespace SimConnectHandler_DemoForm
 
         private void Update_Click(object sender, DataGridViewCellEventArgs e)
         {
-            if(e.ColumnIndex == dgVariables.Columns["Update"].Index)
+            if(e.ColumnIndex == dgVariables.Columns["SimVarUpdate"].Index)
             {
                 // User wants to refresh the displayed value
                 var reqId = (int?)dgVariables.Rows[e.RowIndex].Cells["ReqID"].Value;
                 if (reqId > -1)
                     SimConnectHandler.FetchValueUpdate((int)reqId);
+                else
+                {
+                    var simVarName = (string)dgVariables.Rows[e.RowIndex].Cells["SimVarName"].Value;
+                    var simVarUnit = (string)dgVariables.Rows[e.RowIndex].Cells["SimVarUnit"].Value;
+                    SimConnectVariable request = new SimConnectVariable
+                    {
+                        Name = simVarName,
+                        Unit = simVarUnit
+                    };
+                    dgVariables.Rows[e.RowIndex].Cells["ReqID"].Value = SendRequest(request, true);
+                }
             }
+        }
+
+        private int SendRequest(SimConnectVariable request, bool FetchLatestValue = false)
+        {
+            return SimConnectHandler.SendRequest(request, FetchLatestValue);
+        }
+
+        private void FormClose_Click(object sender, FormClosingEventArgs e)
+        {
+            SimConnectHandler.Disconnect();
         }
     }
 }

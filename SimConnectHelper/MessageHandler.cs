@@ -33,5 +33,11 @@ namespace SimConnectHelper
             else
                 base.WndProc(ref msg);
         }
+
+        internal void Stop()
+        {
+            base.ReleaseHandle();
+            base.DestroyHandle();
+        }
     }
 }

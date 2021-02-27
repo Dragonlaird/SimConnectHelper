@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -18,7 +19,9 @@ namespace SimConnectHelper
     public static class SimConnectHandler
     {
         private static MessageHandler handler = null;
-        private static Thread messagePump;
+        private static CancellationTokenSource source = null;
+        private static CancellationToken token = CancellationToken.None;
+        private static Task messagePump;
         private static AutoResetEvent messagePumpRunning = new AutoResetEvent(false);
         private static EndPoint endPoint;
         private static SimConnect simConnect = null;
@@ -51,7 +54,10 @@ namespace SimConnectHelper
                 endPoint = null; // Ensure Config is recreated if subsequent connect passes same IP/Port
                 DeleteConfigFile();
             }
-            messagePump = new Thread(RunMessagePump) { Name = "ManualMessagePump" };
+            source = new CancellationTokenSource();
+            token = source.Token;
+            token.ThrowIfCancellationRequested();
+            messagePump = new Task(RunMessagePump, token);
             messagePump.Start();
             messagePumpRunning.WaitOne();
         }
@@ -68,8 +74,12 @@ namespace SimConnectHelper
                 endPoint = ep;
                 CreateConfigFile();
             }
-            messagePump = new Thread(RunMessagePump) { Name = "ManualMessagePump" };
+            source = new CancellationTokenSource();
+            token = source.Token;
+            token.ThrowIfCancellationRequested();
+            messagePump = new Task(RunMessagePump, token);
             messagePump.Start();
+            messagePumpRunning = new AutoResetEvent(false);
             messagePumpRunning.WaitOne();
         }
 
@@ -78,8 +88,27 @@ namespace SimConnectHelper
         /// </summary>
         public static void Disconnect()
         {
+            StopMessagePump();
+            // Raise event no  notify client we've disconnected
+            SimConnect_OnRecvQuit(simConnect, null);
+            simConnect.Dispose();
+            simConnect = null;
+        }
+
+        private static void StopMessagePump()
+        {
+            if (source != null && token.CanBeCanceled)
+            {
+                source.Cancel();
+            }
             if (messagePump != null)
+            {
+                handler.Stop();
+                handler = null;
+
                 messagePumpRunning.Close();
+                messagePumpRunning.Dispose();
+            }
             messagePump = null;
         }
 
@@ -172,7 +201,7 @@ DisableNagle=0";
                         Request = Requests[(int)data.dwRequestID],
                         Value = data?.dwData
                     };
-                    SimData.DynamicInvoke(SimData, simVarVal);
+                    SimData.DynamicInvoke(simConnect, simVarVal);
                 }
                 catch// (Exception ex)
                 {
@@ -192,19 +221,8 @@ DisableNagle=0";
                 {
                     var ex = new IOException("SimConnect returned an Error, details in Data", null);
                     ex.Source = "SimConnect";
-                    foreach(var property in data.GetType().GetProperties())
-                    {
-                        try
-                        {
-                            if (property.CanRead)
-                            {
-                                var val = property.GetValue(data);
-                                ex.Data.Add(property.Name, val);
-                            }
-                        }
-                        catch { }
-                    }
-                    SimError.DynamicInvoke(SimData, ex);
+                    ex.Data.Add("data", data);
+                    SimError.DynamicInvoke(simConnect, ex);
                 }
                 catch { }
         }
@@ -220,7 +238,7 @@ DisableNagle=0";
             if (SimConnected != null)
                 try
                 {
-                    SimConnected.DynamicInvoke(SimData, true);
+                    SimConnected.DynamicInvoke(simConnect, true);
                 }
                 catch { }
         }
@@ -236,7 +254,7 @@ DisableNagle=0";
             if (SimConnected != null)
                 try
                 {
-                    SimConnected.DynamicInvoke(SimData, false);
+                    SimConnected.DynamicInvoke(simConnect, false);
                 }
                 catch { }
         }
@@ -259,7 +277,8 @@ DisableNagle=0";
                 SimVarRequest simReq;
                 lock (Requests)
                 {
-                    if (Requests.Any(x => x.Value.Equals(request)))
+                    if (Requests.Any(x => x.Value.Name.Equals(request.Name, StringComparison.InvariantCultureIgnoreCase)
+                        && x.Value.Unit.Equals(request.Unit, StringComparison.InvariantCultureIgnoreCase)))
                     {
                         // Re-use a previously requested variable for retransmission to SimConnect
                         var reqId = Requests.First(x => x.Value.Name == request.Name && x.Value.Unit == request.Unit).Key;
@@ -373,11 +392,12 @@ DisableNagle=0";
                 try
                 {
                     // SimConnect has something to tell us - ask it to raise the relevant event
-                    simConnect.ReceiveMessage();
+                    if (simConnect != null)
+                        simConnect.ReceiveMessage();
                 }
                 catch// (Exception ex)
                 {
-                    // Seems to happen if FS is shutting down
+                    // Seems to happen if FS is shutting down or when we disconnect
                 }
         }
     }
