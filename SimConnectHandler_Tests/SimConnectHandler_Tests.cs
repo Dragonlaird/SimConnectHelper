@@ -33,7 +33,7 @@ namespace SimConnectHandler_Tests
         public void ConnectConfiguration_Test()
         {
             SimConnectHandler.Connect(); // Find/Try all defined server connection configurations
-            Assert.IsNotNull(SimConnectHandler.Connection);
+            Assert.AreNotEqual(SimConnectHandler.Connection.Port, "0");
         }
 
         [TestMethod]

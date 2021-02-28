@@ -55,11 +55,12 @@ namespace SimConnectHelper
             foreach(var config in GetLocalFSConnections())
             {
                 Connect(config);
-                Thread.Sleep(1000);
+                var timeout = DateTime.Now.AddSeconds(1);
+                while (!FSConnected && DateTime.Now < timeout)
+                    Thread.Sleep(50);
                 if (FSConnected)
                     break;
             }
-
         }
 
         /// <summary>
