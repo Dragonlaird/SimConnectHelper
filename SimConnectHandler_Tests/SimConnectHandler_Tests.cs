@@ -23,23 +23,24 @@ namespace SimConnectHandler_Tests
         private SimConnectVariableValue result = null;
 
         [TestMethod]
-        public void ConnectDirect_Test()
+        public void ConnectUseLocalServerConfig_Test()
         {
-            SimConnectHandler.Connect();
+            SimConnectHandler.Connect(); // Find/Try all defined server connection configurations
             Assert.IsTrue(SimConnectHandler.FSConnected);
         }
 
         [TestMethod]
-        public void ConnectDirectNoConfig_Test()
+        public void ConnectConfiguration_Test()
         {
-            SimConnectHandler.Connect(false);
-            Assert.IsTrue(SimConnectHandler.FSConnected);
+            SimConnectHandler.Connect(); // Find/Try all defined server connection configurations
+            Assert.IsNotNull(SimConnectHandler.Connection);
         }
 
         [TestMethod]
         public void ConnectViaIP_Test()
         {
             SimConnectHandler.Connect(GetEndPoint());
+            Thread.Sleep(1000);
             Assert.IsTrue(SimConnectHandler.FSConnected);
         }
 
@@ -53,15 +54,16 @@ namespace SimConnectHandler_Tests
             SimConnectHandler.Connect();
             var variable = new SimConnectVariable
             {
-                Name = "AIRSPEED INDICATED",
+                Name = "AMBIENT WIND VELOCITY",
                 Unit = "knots"
             };
             var requestID = SimConnectHandler.SendRequest(variable, true);
 
-            // Wait for MSFS to return the requested value
-            DateTime endTime = DateTime.Now.AddSeconds(60);
-            while(result == null && DateTime.Now < endTime){
-                Thread.Sleep(1000);
+            // Wait up to 5 seconds for MSFS to return the requested value
+            DateTime endTime = DateTime.Now.AddSeconds(5);
+            while (result == null && DateTime.Now < endTime)
+            {
+                Thread.Sleep(100);
             }
             Assert.IsNotNull(result);
         }

@@ -10,8 +10,6 @@ namespace SimConnectHelper.Common
     [System.Diagnostics.DebuggerDisplay("\\{SimVarRequest\\} {Name}")]
     internal class SimVarRequest
     {
-        private string _name;
-        private string _unit;
         internal int ID { get; set; }
 
         internal SimConnectVariable Request { get; set; }

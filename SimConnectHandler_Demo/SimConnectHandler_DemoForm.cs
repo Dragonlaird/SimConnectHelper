@@ -43,12 +43,10 @@ namespace SimConnectHandler_DemoForm
                 SimConnectHandler.SimConnected += SimConnected;
                 SimConnectHandler.SimError += SimError;
                 SimConnectHandler.SimData += SimData;
-                pbConnect.Text = "Disconnect";
             }
             else
             {
                 SimConnectHandler.Disconnect();
-                pbConnect.Text = "Connect";
             }
         }
 
@@ -86,8 +84,15 @@ namespace SimConnectHandler_DemoForm
             }
             cbConnected.Checked = isConnected;
             if (isConnected)
+            {
                 // Re-request all SimVar values for a new ReqID
+                pbConnect.Text = "Disconnect";
                 RequestAllSimVars();
+            }
+            else
+            {
+                pbConnect.Text = "Connect";
+            }
         }
 
         private void RequestAllSimVars()
@@ -153,7 +158,7 @@ namespace SimConnectHandler_DemoForm
                 // User wants to refresh the displayed value
                 var reqId = (int?)dgVariables.Rows[e.RowIndex].Cells["ReqID"].Value;
                 if (reqId > -1)
-                    SimConnectHandler.FetchValueUpdate((int)reqId);
+                    SimConnectHandler.GetSimVar((int)reqId);
                 else
                 {
                     var simVarName = (string)dgVariables.Rows[e.RowIndex].Cells["SimVarName"].Value;

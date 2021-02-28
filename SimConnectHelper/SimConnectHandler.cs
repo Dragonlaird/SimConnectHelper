@@ -1,6 +1,7 @@
 ﻿using Microsoft.FlightSimulator.SimConnect;
 using SimConnectHelper.Common;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -10,6 +11,8 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Xml;
+using System.Xml.Serialization;
 
 namespace SimConnectHelper
 {
@@ -22,15 +25,15 @@ namespace SimConnectHelper
         private static CancellationTokenSource source = null;
         private static CancellationToken token = CancellationToken.None;
         private static Task messagePump;
-        private static AutoResetEvent messagePumpRunning = new AutoResetEvent(false);
         private static EndPoint endPoint;
+        private static AutoResetEvent messagePumpRunning = new AutoResetEvent(false);
         private static SimConnect simConnect = null;
         private const int WM_USER_SIMCONNECT = 0x0402;
         private static int RequestID = 0;
         private static Dictionary<int, SimConnectVariable> Requests = new Dictionary<int, SimConnectVariable>();
         public static bool UseFSXcompatibleConnection { get; set; } = false;
         public static bool FSConnected { get; private set; } = false;
-
+        public static SimConnectConfig Connection { get; private set; }
         /// <summary>
         /// Called whenever SimConnect connects or disconnects with MSFS 2020
         /// </summary>
@@ -47,19 +50,16 @@ namespace SimConnectHelper
         /// <summary>
         /// Attempts to connect to MSFS 2020, either re-using an existing CFG file or optionally, removing it
         /// </summary>
-        public static void Connect(bool UseExistingConfig = true)
+        public static void Connect()
         {
-            if (!UseExistingConfig)
+            foreach(var config in GetLocalFSConnections())
             {
-                endPoint = null; // Ensure Config is recreated if subsequent connect passes same IP/Port
-                DeleteConfigFile();
+                Connect(config);
+                Thread.Sleep(1000);
+                if (FSConnected)
+                    break;
             }
-            source = new CancellationTokenSource();
-            token = source.Token;
-            token.ThrowIfCancellationRequested();
-            messagePump = new Task(RunMessagePump, token);
-            messagePump.Start();
-            messagePumpRunning.WaitOne();
+
         }
 
         /// <summary>
@@ -69,11 +69,16 @@ namespace SimConnectHelper
         /// <param name="ep">MSFS 2020 SimConnect Server IP & Port</param>
         public static void Connect(EndPoint ep)
         {
-            if (!ep.Equals(endPoint))
-            {
-                endPoint = ep;
-                CreateConfigFile();
-            }
+            endPoint = ep;
+            Connect((SimConnectConfig)null);
+        }
+
+        public static void Connect(SimConnectConfig config)
+        {
+            if (source != null)
+                Disconnect();
+            Connection = config;
+            CreateConfigFile(config);
             source = new CancellationTokenSource();
             token = source.Token;
             token.ThrowIfCancellationRequested();
@@ -89,9 +94,9 @@ namespace SimConnectHelper
         public static void Disconnect()
         {
             StopMessagePump();
-            // Raise event no  notify client we've disconnected
+            // Raise event to notify client we've disconnected
             SimConnect_OnRecvQuit(simConnect, null);
-            simConnect.Dispose();
+            simConnect?.Dispose(); // May have already been disposed or not even been created, e.g. Disconnect called before Connect
             simConnect = null;
         }
 
@@ -118,7 +123,7 @@ namespace SimConnectHelper
         /// 
         private static bool DeleteConfigFile()
         {
-            var filePath = Path.Combine(Environment.CurrentDirectory, "SimConnect.cfg");
+            var filePath = GetConfigFilePath();// Path.Combine(Environment.CurrentDirectory, "SimConnect.cfg");
             if (File.Exists(filePath))
                 try
                 {
@@ -128,16 +133,17 @@ namespace SimConnectHelper
             return true;
         }
 
-        private static void CreateConfigFile()
+        private static void CreateConfigFile(SimConnectConfig config = null)
         {
-            const string configTemplate = @"[simConnect]
-Protocol=IPv4
-Address={0}
-Port={1}
-MaxReceiveSize=4096
-DisableNagle=0";
-            var filePath = Path.Combine(Environment.CurrentDirectory, "SimConnect.cfg");
-            File.WriteAllText(filePath, string.Format(configTemplate, ((IPEndPoint)endPoint).Address, ((IPEndPoint)endPoint).Port));
+            if (config == null)
+                config = new SimConnectConfig
+                {
+                    Descr = "Dynamic Config",
+                    Address = ((IPEndPoint)endPoint).Address.ToString(),
+                    Port = ((IPEndPoint)endPoint).Port.ToString()
+                };
+            var filePath = GetConfigFilePath();
+            File.WriteAllText(filePath, config.ConfigFileText);
         }
 
         /// <summary>
@@ -180,8 +186,6 @@ DisableNagle=0";
 
                 /// Listen for SimVar Data
                 simConnect.OnRecvSimobjectDataBytype += new SimConnect.RecvSimobjectDataBytypeEventHandler(SimConnect_OnRecvSimobjectDataBytype);
-
-                FSConnected = true;
             }
             catch { } // Is MSFS is not running, a COM Exception is raised. We ignore it!
         }
@@ -331,7 +335,7 @@ DisableNagle=0";
                         break;
                 }
                 if (FetchImmediately)
-                    FetchValueUpdate(simReq.ID); // Request value to be sent back immediately
+                    GetSimVar(simReq.ID); // Request value to be sent back immediately
                 return simReq.ID;
             }
             return -1;
@@ -364,10 +368,10 @@ DisableNagle=0";
         }
 
         /// <summary>
-        /// Tell SimConnect to start capturing values for a specific variable request and raise an event each time the value changes
+        /// Request an update for a specific SimVar request
         /// </summary>
         /// <param name="requestID">ID returned by SendRequest</param>
-        public static void FetchValueUpdate(int requestID)
+        public static void GetSimVar(int requestID)
         {
             try
             {
@@ -380,6 +384,23 @@ DisableNagle=0";
             }
         }
 
+        /// <summary>
+        /// Request an update for a specific SimVar request
+        /// </summary>
+        /// <param name="requestID">Variable definition requested via SendRequest</param>
+        public static void GetSimVar(SimConnectVariable request)
+        {
+            var reqId = Requests.FirstOrDefault(x => x.Value.Name.Equals(request.Name, StringComparison.InvariantCultureIgnoreCase) && x.Value.Unit.Equals(request.Unit, StringComparison.InvariantCultureIgnoreCase)).Key;
+            if (reqId > -1)
+            {
+                GetSimVar(reqId);
+            }
+        }
+
+        public static void SetSimVar(SimConnectVariableValue simConnectVariableValue)
+        {
+
+        }
 
         /// <summary>
         /// Every Windowws Message is captured here, we check for SimConnect messages and process them, else we ignore it
@@ -399,6 +420,54 @@ DisableNagle=0";
                 {
                     // Seems to happen if FS is shutting down or when we disconnect
                 }
+        }
+
+        /// <summary>
+        /// Full path & filename to the SimConnect.cfg file
+        /// </summary>
+        /// <returns>SimConnect.cfg FilePath</returns>
+        private static string GetConfigFilePath()
+        {
+            // Need to confirm the correct locaion for SimConnct.cfg.
+            // Some documentation states it is in the AppData folder, others within the current folder, others still state the My Documents folder
+            //var filePath = Path.Combine(Environment.GetEnvironmentVariable("APPDATA"), "Microsoft Flight Simulator", "SimConnect.cfg");
+            var filePath = Path.Combine(Environment.CurrentDirectory, "SimConnect.cfg");
+            return filePath;
+        }
+
+        private static List<SimConnectConfig> GetLocalFSConnections()
+        {
+            List<SimConnectConfig> configs = new List<SimConnectConfig>();
+            try
+            {
+                var filePath = Path.Combine(Environment.GetEnvironmentVariable("APPDATA"), "Microsoft Flight Simulator", "SimConnect.xml");
+                var fileContent = File.ReadAllText(filePath); // Load the file content instead of loading as XML - overcomes limitation with encoding
+                XmlDocument xml = new XmlDocument();
+                xml.LoadXml(fileContent);
+                XmlNodeList xmlNodeList = xml.SelectNodes("/SimBase.Document/SimConnect.Comm");
+                foreach (XmlNode xmlNode in xmlNodeList)
+                {
+                    try
+                    {
+                        SimConnectConfig config = GetConfigFromXml(xmlNode);
+                        configs.Add(config);
+                    }
+                    catch { }
+                }
+            }
+            catch
+            {
+            }
+            return configs;
+        }
+
+        private static SimConnectConfig GetConfigFromXml(XmlNode xmlNode)
+        {
+            XmlSerializer serial = new XmlSerializer(typeof(SimConnectConfig));
+            using (XmlNodeReader reader = new XmlNodeReader(xmlNode))
+            {
+                return (SimConnectConfig)serial.Deserialize(reader);
+            }
         }
     }
 }
