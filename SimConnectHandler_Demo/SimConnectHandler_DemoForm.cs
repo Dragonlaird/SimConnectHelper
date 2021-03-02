@@ -116,6 +116,10 @@ namespace SimConnectHandler_DemoForm
         {
             var simVar = (KeyValuePair<string, SimVarDefinition>)cmbVariable.SelectedItem;
             txtUnit.Text = simVar.Value.DefaultUnit;
+            if (simVar.Value.ReadOnly)
+                txtSimVarValue.Enabled = false;
+            else
+                txtSimVarValue.Enabled = true;
         }
 
         private DataGridViewRow FindRowBySimVarName(string simVarName)
@@ -136,20 +140,40 @@ namespace SimConnectHandler_DemoForm
             bool bCanSendRequest = FindRowBySimVarName(simVarName) == null;
             if (bCanSendRequest)
             {
+                var value = "";
+                int reqId = -1;
+                var isReadOnly = simVarDefinition.ReadOnly;
+                if (!isReadOnly)
+                    value = txtSimVarValue.Text;
                 int rowIdx = dgVariables.Rows.Add(new object[]
                 {
                     0, // RecID
                     simVarName, // SimVar
                     simVarDefinition.DefaultUnit, // Units
-                    "" // Value
+                    value, // Value
+                    isReadOnly // ReadOnly
                 });
-                // Send Request - then update ReqID cell with returned request ID
+                if (!isReadOnly)
+                    dgVariables.Rows[rowIdx].Cells["SimVarValue"].ReadOnly = false;
                 SimConnectVariable variableRequest = new SimConnectVariable
                 {
                     Name = simVarName,
                     Unit = simVarDefinition.DefaultUnit
                 };
-                var reqId = SendRequest(variableRequest, true);
+                if (isReadOnly)
+                {
+                    // Send Request - then update ReqID cell with returned request ID
+                    reqId = SendRequest(variableRequest, true);
+                }
+                else
+                {
+                    SimConnectVariableValue variableValue = new SimConnectVariableValue
+                    {
+                        Request = variableRequest,
+                        Value = value
+                    };
+                    SendValue(variableValue);
+                }
                 dgVariables.Rows[rowIdx].Cells["ReqID"].Value = reqId;
             }
 
@@ -165,6 +189,8 @@ namespace SimConnectHandler_DemoForm
                     SimConnectHandler.GetSimVar((int)reqId);
                 else
                 {
+                    var isReadOnly = ((DataGridViewCheckBoxCell)dgVariables.Rows[e.RowIndex].Cells["VarIsReadOnly"]).Value
+                        == ((DataGridViewCheckBoxCell)dgVariables.Rows[e.RowIndex].Cells["VarIsReadOnly"]).TrueValue;
                     var simVarName = (string)dgVariables.Rows[e.RowIndex].Cells["SimVarName"].Value;
                     var simVarUnit = (string)dgVariables.Rows[e.RowIndex].Cells["SimVarUnit"].Value;
                     SimConnectVariable request = new SimConnectVariable
@@ -172,14 +198,29 @@ namespace SimConnectHandler_DemoForm
                         Name = simVarName,
                         Unit = simVarUnit
                     };
-                    dgVariables.Rows[e.RowIndex].Cells["ReqID"].Value = SendRequest(request, true);
+                    if (isReadOnly)
+                        dgVariables.Rows[e.RowIndex].Cells["ReqID"].Value = SendRequest(request, true);
+                    else
+                    {
+                        var value = dgVariables.Rows[e.RowIndex].Cells["SimVarValue"].Value;
+                        SendValue(new SimConnectVariableValue
+                        {
+                            Request = request,
+                            Value = value
+                        });
+                    }
                 }
             }
         }
 
+        private void SendValue(SimConnectVariableValue variableValue)
+        {
+            SimConnectHandler.SetSimVar(variableValue);
+        }
+
         private int SendRequest(SimConnectVariable request, bool FetchLatestValue = false)
         {
-            return SimConnectHandler.SendRequest(request, FetchLatestValue);
+            return SimConnectHandler.SendRequest(request, FetchLatestValue); // If FetchLatestValue = true; Auto-update
         }
 
         private void FormClose_Click(object sender, FormClosingEventArgs e)

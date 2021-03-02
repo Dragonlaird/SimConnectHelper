@@ -37,6 +37,8 @@ namespace SimConnectHandler_DemoForm
             this.cbConnected = new System.Windows.Forms.CheckBox();
             this.gpConnect = new System.Windows.Forms.GroupBox();
             this.gpRequest = new System.Windows.Forms.GroupBox();
+            this.txtSimVarValue = new System.Windows.Forms.TextBox();
+            this.lblSimVarValue = new System.Windows.Forms.Label();
             this.txtUnit = new System.Windows.Forms.TextBox();
             this.lblUnit = new System.Windows.Forms.Label();
             this.pbSendRequest = new System.Windows.Forms.Button();
@@ -47,6 +49,7 @@ namespace SimConnectHandler_DemoForm
             this.SimVarName = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.SimVarUnit = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.SimVarValue = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.VarIsReadOnly = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             this.SimVarUpdate = new System.Windows.Forms.DataGridViewButtonColumn();
             ((System.ComponentModel.ISupportInitialize)(this.txtSimConnectPort)).BeginInit();
             this.gpConnect.SuspendLayout();
@@ -139,6 +142,8 @@ namespace SimConnectHandler_DemoForm
             // 
             // gpRequest
             // 
+            this.gpRequest.Controls.Add(this.txtSimVarValue);
+            this.gpRequest.Controls.Add(this.lblSimVarValue);
             this.gpRequest.Controls.Add(this.txtUnit);
             this.gpRequest.Controls.Add(this.lblUnit);
             this.gpRequest.Controls.Add(this.pbSendRequest);
@@ -146,10 +151,27 @@ namespace SimConnectHandler_DemoForm
             this.gpRequest.Controls.Add(this.lblVariable);
             this.gpRequest.Location = new System.Drawing.Point(13, 136);
             this.gpRequest.Name = "gpRequest";
-            this.gpRequest.Size = new System.Drawing.Size(381, 130);
+            this.gpRequest.Size = new System.Drawing.Size(381, 133);
             this.gpRequest.TabIndex = 7;
             this.gpRequest.TabStop = false;
             this.gpRequest.Text = "Request";
+            // 
+            // txtSimVarValue
+            // 
+            this.txtSimVarValue.Enabled = false;
+            this.txtSimVarValue.Location = new System.Drawing.Point(65, 98);
+            this.txtSimVarValue.Name = "txtSimVarValue";
+            this.txtSimVarValue.Size = new System.Drawing.Size(107, 23);
+            this.txtSimVarValue.TabIndex = 6;
+            // 
+            // lblSimVarValue
+            // 
+            this.lblSimVarValue.AutoSize = true;
+            this.lblSimVarValue.Location = new System.Drawing.Point(21, 101);
+            this.lblSimVarValue.Name = "lblSimVarValue";
+            this.lblSimVarValue.Size = new System.Drawing.Size(38, 15);
+            this.lblSimVarValue.TabIndex = 5;
+            this.lblSimVarValue.Text = "Value:";
             // 
             // txtUnit
             // 
@@ -170,7 +192,7 @@ namespace SimConnectHandler_DemoForm
             // 
             // pbSendRequest
             // 
-            this.pbSendRequest.Location = new System.Drawing.Point(267, 93);
+            this.pbSendRequest.Location = new System.Drawing.Point(267, 98);
             this.pbSendRequest.Name = "pbSendRequest";
             this.pbSendRequest.Size = new System.Drawing.Size(108, 23);
             this.pbSendRequest.TabIndex = 2;
@@ -210,6 +232,7 @@ namespace SimConnectHandler_DemoForm
             this.SimVarName,
             this.SimVarUnit,
             this.SimVarValue,
+            this.VarIsReadOnly,
             this.SimVarUpdate});
             this.dgVariables.EditMode = System.Windows.Forms.DataGridViewEditMode.EditProgrammatically;
             this.dgVariables.Location = new System.Drawing.Point(427, 12);
@@ -246,6 +269,13 @@ namespace SimConnectHandler_DemoForm
             this.SimVarValue.HeaderText = "Value";
             this.SimVarValue.Name = "SimVarValue";
             this.SimVarValue.ReadOnly = true;
+            // 
+            // VarIsReadOnly
+            // 
+            this.VarIsReadOnly.HeaderText = "Read Only";
+            this.VarIsReadOnly.Name = "VarIsReadOnly";
+            this.VarIsReadOnly.ReadOnly = true;
+            this.VarIsReadOnly.Width = 60;
             // 
             // SimVarUpdate
             // 
@@ -295,10 +325,13 @@ namespace SimConnectHandler_DemoForm
         private System.Windows.Forms.TextBox txtUnit;
         private System.Windows.Forms.Label lblUnit;
         private System.Windows.Forms.DataGridView dgVariables;
+        private System.Windows.Forms.TextBox txtSimVarValue;
+        private System.Windows.Forms.Label lblSimVarValue;
         private System.Windows.Forms.DataGridViewTextBoxColumn ReqID;
         private System.Windows.Forms.DataGridViewTextBoxColumn SimVarName;
         private System.Windows.Forms.DataGridViewTextBoxColumn SimVarUnit;
         private System.Windows.Forms.DataGridViewTextBoxColumn SimVarValue;
+        private System.Windows.Forms.DataGridViewCheckBoxColumn VarIsReadOnly;
         private System.Windows.Forms.DataGridViewButtonColumn SimVarUpdate;
     }
 }

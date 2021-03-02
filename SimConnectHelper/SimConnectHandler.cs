@@ -47,6 +47,7 @@ namespace SimConnectHelper
         /// </summary>
         public static EventHandler<SimConnectVariableValue> SimData;
 
+        public static SimConnectUpdateFrequency DefaultUpdateFrequency { get; set; } = SimConnectUpdateFrequency.SIM_Frame;
         /// <summary>
         /// Attempts to connect to MSFS 2020, either re-using an existing CFG file or optionally, removing it
         /// </summary>
@@ -187,8 +188,32 @@ namespace SimConnectHelper
 
                 /// Listen for SimVar Data
                 simConnect.OnRecvSimobjectDataBytype += new SimConnect.RecvSimobjectDataBytypeEventHandler(SimConnect_OnRecvSimobjectDataBytype);
+
+                /// Listen for SimVar Data
+                simConnect.OnRecvSimobjectData += new SimConnect.RecvSimobjectDataEventHandler(SimConnect_OnRecvSimobjectData);
             }
             catch { } // Is MSFS is not running, a COM Exception is raised. We ignore it!
+        }
+
+        private static void SimConnect_OnRecvSimobjectData(SimConnect sender, SIMCONNECT_RECV_SIMOBJECT_DATA data)
+        {
+            if (simConnect != null) {
+                var newData = new SIMCONNECT_RECV_SIMOBJECT_DATA_BYTYPE
+                {
+                    dwData = data.dwData,
+                    dwDefineCount = data.dwDefineCount,
+                    dwDefineID = data.dwDefineID,
+                    dwentrynumber = data.dwentrynumber,
+                    dwFlags = data.dwFlags,
+                    dwID = data.dwID,
+                    dwObjectID = data.dwObjectID,
+                    dwoutof = data.dwoutof,
+                    dwRequestID = data.dwRequestID,
+                    dwSize = data.dwSize,
+                    dwVersion = data.dwVersion
+                };
+                SimConnect_OnRecvSimobjectDataBytype(sender, newData);
+            }
         }
 
         /// <summary>
@@ -264,6 +289,11 @@ namespace SimConnectHelper
                 catch { }
         }
 
+        public static int SendValue(SimConnectVariableValue variableValue)
+        {
+            throw new NotImplementedException();
+        }
+
         /// <summary>
         /// Request a SimVariable from SimConnect, optionally start capturing values
         /// </summary>
@@ -336,7 +366,7 @@ namespace SimConnectHelper
                         break;
                 }
                 if (FetchImmediately)
-                    GetSimVar(simReq.ID); // Request value to be sent back immediately
+                    GetSimVar(simReq.ID, DefaultUpdateFrequency); // Request value to be sent back immediately, will auto-update using pre-defined frequency
                 return simReq.ID;
             }
             return -1;
@@ -372,12 +402,19 @@ namespace SimConnectHelper
         /// Request an update for a specific SimVar request
         /// </summary>
         /// <param name="requestID">ID returned by SendRequest</param>
-        public static void GetSimVar(int requestID)
+        /// <param name="frequency">SimVar can be requested manually (SimConnectUpdateFrequency.Never) or auto-sent at a pre-defined frequency</param>
+        public static void GetSimVar(int requestID, SimConnectUpdateFrequency frequency = SimConnectUpdateFrequency.Never)
         {
             try
             {
                 if (FSConnected)
-                    simConnect?.RequestDataOnSimObjectType((SIMVARREQUEST)requestID, (SIMVARDEFINITION)requestID, 0, SIMCONNECT_SIMOBJECT_TYPE.USER);
+                    if (frequency == SimConnectUpdateFrequency.Never)
+                        simConnect?.RequestDataOnSimObjectType((SIMVARREQUEST)requestID, (SIMVARDEFINITION)requestID, 0, SIMCONNECT_SIMOBJECT_TYPE.USER);
+                    else
+                    {
+                        SIMCONNECT_PERIOD period = Enum.Parse<SIMCONNECT_PERIOD>(frequency.ToString().ToUpper());
+                        simConnect?.RequestDataOnSimObject((SIMVARREQUEST)requestID, (SIMVARDEFINITION)requestID, 0, period, SIMCONNECT_DATA_REQUEST_FLAG.DEFAULT, 0, 0, 0);
+                    }
             }
             catch// (Exception ex)
             {
@@ -385,10 +422,11 @@ namespace SimConnectHelper
             }
         }
 
+
         /// <summary>
-        /// Request an update for a specific SimVar request
+        /// Request an update for a specific SimVar request (used for GetSimVar(frequency = SIMCONNECT_PERIOD.NEVER))
         /// </summary>
-        /// <param name="requestID">Variable definition requested via SendRequest</param>
+        /// <param name="requestID">Variable definition requested via GetSimVar</param>
         public static void GetSimVar(SimConnectVariable request)
         {
             var reqId = Requests.FirstOrDefault(x => x.Value.Name.Equals(request.Name, StringComparison.InvariantCultureIgnoreCase) && x.Value.Unit.Equals(request.Unit, StringComparison.InvariantCultureIgnoreCase)).Key;
