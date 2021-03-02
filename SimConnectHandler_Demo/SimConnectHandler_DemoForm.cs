@@ -17,6 +17,7 @@ namespace SimConnectHandler_DemoForm
 {
     public partial class SimConnectHandler_DemoForm : Form
     {
+        private readonly Dictionary<string, SimVarDefinition> simVarVariable = SimVarUnits.DefaultUnits;
         public SimConnectHandler_DemoForm()
         {
             InitializeComponent();
@@ -25,9 +26,10 @@ namespace SimConnectHandler_DemoForm
 
         private void Initialize()
         {
-            cmbVariable.DataSource = new SimConnectHelper.Common.SimVarList().ToList();
+            var dataSource = simVarVariable.OrderBy(x=> x.Key).ToList();
+            cmbVariable.DataSource = dataSource; //.SimVarList().ToList();
             cmbVariable.DisplayMember = "Key";
-            cmbVariable.ValueMember = "Value";
+            cmbVariable.ValueMember = "Key";
             dgVariables.Rows.Clear();
         }
 
@@ -112,7 +114,8 @@ namespace SimConnectHandler_DemoForm
 
         private void Variable_Changed(object sender, EventArgs e)
         {
-            txtUnit.Text = ((KeyValuePair<string,string>)cmbVariable.SelectedItem).Value;
+            var simVar = (KeyValuePair<string, SimVarDefinition>)cmbVariable.SelectedItem;
+            txtUnit.Text = simVar.Value.DefaultUnit;
         }
 
         private DataGridViewRow FindRowBySimVarName(string simVarName)
@@ -127,8 +130,9 @@ namespace SimConnectHandler_DemoForm
 
         private void pbSendRequest_Click(object sender, EventArgs e)
         {
-            var simVarName = ((KeyValuePair<string, string>)cmbVariable.SelectedItem).Key;
-            var simVarUnit = ((KeyValuePair<string, string>)cmbVariable.SelectedItem).Value;
+            var selectedItem = (KeyValuePair<string, SimVarDefinition>)cmbVariable.SelectedItem;
+            var simVarName = selectedItem.Key;
+            var simVarDefinition = selectedItem.Value;
             bool bCanSendRequest = FindRowBySimVarName(simVarName) == null;
             if (bCanSendRequest)
             {
@@ -136,14 +140,14 @@ namespace SimConnectHandler_DemoForm
                 {
                     0, // RecID
                     simVarName, // SimVar
-                    simVarUnit, // Units
+                    simVarDefinition.DefaultUnit, // Units
                     "" // Value
                 });
                 // Send Request - then update ReqID cell with returned request ID
                 SimConnectVariable variableRequest = new SimConnectVariable
                 {
                     Name = simVarName,
-                    Unit = simVarUnit
+                    Unit = simVarDefinition.DefaultUnit
                 };
                 var reqId = SendRequest(variableRequest, true);
                 dgVariables.Rows[rowIdx].Cells["ReqID"].Value = reqId;

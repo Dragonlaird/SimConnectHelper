@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 
 namespace SimConnectHelper.Common
 {
-    internal class SimVarDefinition
+    public class SimVarDefinition
     {
-        internal SimVarDefinition(string name, string description, string defaultUnit, Type unitType, bool readOnly, bool multiPlayer)
+        public SimVarDefinition(string name, string description, string defaultUnit, Type unitType, bool readOnly, bool multiPlayer)
         {
             Name = name;
             Description = description;
@@ -17,11 +17,11 @@ namespace SimConnectHelper.Common
             ReadOnly = readOnly;
             MultiPlayer = multiPlayer;
         }
-        internal string Name { get; set; }
-        internal string Description { get; set; }
-        internal string DefaultUnit { get; set; }
-        internal Type UnitType { get; set; }
-        internal bool ReadOnly { get; set; }
-        internal bool MultiPlayer { get; set; }
+        public string Name { get; set; }
+        public string Description { get; set; }
+        public string DefaultUnit { get; set; }
+        public Type UnitType { get; set; }
+        public bool ReadOnly { get; set; }
+        public bool MultiPlayer { get; set; }
     }
 }
