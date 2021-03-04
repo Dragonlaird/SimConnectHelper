@@ -108,7 +108,7 @@ namespace SimConnectHandler_DemoForm
                     Name = simVarName,
                     Unit = simVarUnit
                 };
-                SimConnectHandler.SendRequest(request, true);
+                SimConnectHandler.GetSimVar(request);
             }
         }
 
@@ -220,7 +220,7 @@ namespace SimConnectHandler_DemoForm
 
         private int SendRequest(SimConnectVariable request, bool FetchLatestValue = false)
         {
-            return SimConnectHandler.SendRequest(request, FetchLatestValue); // If FetchLatestValue = true; Auto-update
+            return SimConnectHandler.GetSimVar(request, FetchLatestValue ? SimConnectHandler.DefaultUpdateFrequency : SimConnectUpdateFrequency.Never); // If FetchLatestValue = true; Auto-update
         }
 
         private void FormClose_Click(object sender, FormClosingEventArgs e)

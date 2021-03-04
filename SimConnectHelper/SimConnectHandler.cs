@@ -289,18 +289,13 @@ namespace SimConnectHelper
                 catch { }
         }
 
-        public static int SendValue(SimConnectVariableValue variableValue)
-        {
-            throw new NotImplementedException();
-        }
-
         /// <summary>
         /// Request a SimVariable from SimConnect, optionally start capturing values
         /// </summary>
         /// <param name="request">SimVar to fetch from SimConnect</param>
         /// <param name="FetchImmediately">TRUE = Retrieve latest value and return via SimData event; FALSE = Submit Request but do not return the current value yet</param>
         /// <returns>A unique ID for the submitted request. Use this to request the next value via FetchValueUpdate</returns>
-        public static int SendRequest(SimConnectVariable request, bool FetchImmediately = false)
+        public static int GetSimVar(SimConnectVariable request, SimConnectUpdateFrequency frequency = SimConnectUpdateFrequency.Never)
         {
             if (FSConnected)
             {
@@ -316,7 +311,7 @@ namespace SimConnectHelper
                         && x.Value.Unit.Equals(request.Unit, StringComparison.InvariantCultureIgnoreCase)))
                     {
                         // Re-use a previously requested variable for retransmission to SimConnect
-                        var reqId = Requests.First(x => x.Value.Name == request.Name && x.Value.Unit == request.Unit).Key;
+                        var reqId = GetRequestId(request);
                         simReq = new SimVarRequest
                         {
                             ID = reqId,
@@ -365,7 +360,7 @@ namespace SimConnectHelper
                         simConnect.RegisterDataDefineStruct<object>(simReq.DefID); // This will likely fail as variants don't transform well
                         break;
                 }
-                if (FetchImmediately)
+                if (frequency != SimConnectUpdateFrequency.Never)
                     GetSimVar(simReq.ID, DefaultUpdateFrequency); // Request value to be sent back immediately, will auto-update using pre-defined frequency
                 return simReq.ID;
             }
@@ -418,10 +413,9 @@ namespace SimConnectHelper
             }
             catch// (Exception ex)
             {
-                // Likely cause, no request for this variable has been received
+                // Likely cause, no request for this variable has previously been submitted
             }
         }
-
 
         /// <summary>
         /// Request an update for a specific SimVar request (used for GetSimVar(frequency = SIMCONNECT_PERIOD.NEVER))
@@ -429,16 +423,42 @@ namespace SimConnectHelper
         /// <param name="requestID">Variable definition requested via GetSimVar</param>
         public static void GetSimVar(SimConnectVariable request)
         {
-            var reqId = Requests.FirstOrDefault(x => x.Value.Name.Equals(request.Name, StringComparison.InvariantCultureIgnoreCase) && x.Value.Unit.Equals(request.Unit, StringComparison.InvariantCultureIgnoreCase)).Key;
+            var reqId = GetRequestId(request);
             if (reqId > -1)
             {
-                GetSimVar(reqId);
+                GetSimVar(reqId, SimConnectUpdateFrequency.Never);
+            }
+            else
+            {
+                GetSimVar(request, DefaultUpdateFrequency);
             }
         }
 
-        public static void SetSimVar(SimConnectVariableValue simConnectVariableValue)
+        /// <summary>
+        /// Set the value associated with a SimVar
+        /// </summary>
+        /// <param name="simVarValue">SimVar and associated value</param>
+        public static void SetSimVar(SimConnectVariableValue simVarValue)
         {
+            // As for requests, setting values is a 2-step process, reserve the data area,then modify the data it holds
+            GetSimVar(simVarValue.Request);
+            var reqId = GetRequestId(simVarValue.Request);
+            if (reqId > -1)
+            {
+                // Data area reserved, now set the value
+                simConnect.SetDataOnSimObject((SIMVARDEFINITION)reqId, (uint)reqId, (SIMCONNECT_DATA_SET_FLAG)SimConnect.SIMCONNECT_OBJECT_ID_USER, simVarValue.Value);
+            }
+        }
 
+        private static int GetRequestId(SimConnectVariable request)
+        {
+            return Requests.Any(x =>
+                x.Value.Name.Equals(request.Name, StringComparison.InvariantCultureIgnoreCase)
+                && x.Value.Unit.Equals(request.Unit, StringComparison.InvariantCultureIgnoreCase)) ?
+                    Requests.FirstOrDefault(x =>
+                        x.Value.Name.Equals(request.Name, StringComparison.InvariantCultureIgnoreCase)
+                        && x.Value.Unit.Equals(request.Unit, StringComparison.InvariantCultureIgnoreCase)).Key
+                : -1;
         }
 
         /// <summary>
