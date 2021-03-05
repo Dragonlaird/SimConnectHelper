@@ -46,10 +46,17 @@ namespace SimConnectHelper
         /// Called whenever MSFS 2020 transmits requested data about an object (e.g. SimVar result)
         /// </summary>
         public static EventHandler<SimConnectVariableValue> SimData;
-
+        /// <summary>
+        /// How often should SimConnect update the values f requested SimVars
+        /// </summary>
         public static SimConnectUpdateFrequency DefaultUpdateFrequency { get; set; } = SimConnectUpdateFrequency.SIM_Frame;
         /// <summary>
-        /// Attempts to connect to MSFS 2020, either re-using an existing CFG file or optionally, removing it
+        /// Full path and filename to use for saving a Config file
+        /// </summary>
+        public static string ConfigFilePath { get; set; } = Path.Combine(Environment.CurrentDirectory, "SimConnect.cfg");
+
+        /// <summary>
+        /// Attempts to connect to a local instance of MSFS 2020, using each XML-defined connection, until one connects
         /// </summary>
         public static void Connect()
         {
@@ -68,10 +75,11 @@ namespace SimConnectHelper
         /// Creates a SimConnect.cfg file and attempts to connect SimConnect to MSFS 2020.
         /// Only creates a SimConnect.cfg if Server IP or Port are different from last connection
         /// </summary>
-        /// <param name="ep">MSFS 2020 SimConnect Server IP & Port</param>
+        /// <param name="ep">MSFS 2020 SimConnect Server IP & Port, NULL forces the re-use of a previously saved Config</param>
         public static void Connect(EndPoint ep)
         {
-            endPoint = ep;
+            if (ep != null)
+                endPoint = ep;
             Connect((SimConnectConfig)null);
         }
 
@@ -490,8 +498,7 @@ namespace SimConnectHelper
             // Need to confirm the correct locaion for SimConnct.cfg.
             // Some documentation states it is in the AppData folder, others within the current folder, others still state the My Documents folder
             //var filePath = Path.Combine(Environment.GetEnvironmentVariable("APPDATA"), "Microsoft Flight Simulator", "SimConnect.cfg");
-            var filePath = Path.Combine(Environment.CurrentDirectory, "SimConnect.cfg");
-            return filePath;
+            return ConfigFilePath;
         }
 
         private static List<SimConnectConfig> GetLocalFSConnections()
