@@ -30,7 +30,7 @@ namespace SimConnectHelper
         private static SimConnect simConnect = null;
         private const int WM_USER_SIMCONNECT = 0x0402;
         private static int RequestID = 0;
-        private static Dictionary<int, SimConnectVariable> Requests = new Dictionary<int, SimConnectVariable>();
+        public static Dictionary<int, SimConnectVariable> Requests { get; private set; } = new Dictionary<int, SimConnectVariable>();
         public static bool UseFSXcompatibleConnection { get; set; } = false;
         public static bool FSConnected { get; private set; } = false;
         public static SimConnectConfig Connection { get; private set; }
@@ -47,7 +47,7 @@ namespace SimConnectHelper
         /// </summary>
         public static EventHandler<SimConnectVariableValue> SimData;
         /// <summary>
-        /// How often should SimConnect update the values f requested SimVars
+        /// How often should SimConnect update the values for requested SimVars
         /// </summary>
         public static SimConnectUpdateFrequency DefaultUpdateFrequency { get; set; } = SimConnectUpdateFrequency.SIM_Frame;
         /// <summary>
@@ -301,7 +301,7 @@ namespace SimConnectHelper
         /// Request a SimVariable from SimConnect, optionally start capturing values
         /// </summary>
         /// <param name="request">SimVar to fetch from SimConnect</param>
-        /// <param name="FetchImmediately">TRUE = Retrieve latest value and return via SimData event; FALSE = Submit Request but do not return the current value yet</param>
+        /// <param name="frequency">How frequently should SimConnect provide an updated value?</param>
         /// <returns>A unique ID for the submitted request. Use this to request the next value via FetchValueUpdate</returns>
         public static int GetSimVar(SimConnectVariable request, SimConnectUpdateFrequency frequency = SimConnectUpdateFrequency.Never)
         {
@@ -434,12 +434,22 @@ namespace SimConnectHelper
             var reqId = GetRequestId(request);
             if (reqId > -1)
             {
-                GetSimVar(reqId, SimConnectUpdateFrequency.Never);
+                GetSimVar(reqId);
             }
             else
             {
-                GetSimVar(request, DefaultUpdateFrequency);
+                GetSimVar(request, SimConnectUpdateFrequency.Never);
             }
+        }
+
+        /// <summary>
+        /// Request an update for a specific SimVar request ID returned by GetSimVar(frequency = SIMCONNECT_PERIOD.NEVER)
+        /// </summary>
+        /// <param name="requestId">ID returned when submitting the original SimVar request</param>
+        public static void GetSimVar(int requestId)
+        {
+            if(requestId > -1)
+                GetSimVar(requestId, SimConnectUpdateFrequency.Never);
         }
 
         /// <summary>
