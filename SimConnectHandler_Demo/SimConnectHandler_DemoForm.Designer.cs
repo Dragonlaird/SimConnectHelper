@@ -51,6 +51,7 @@ namespace SimConnectHandler_DemoForm
             this.SimVarValue = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.VarIsReadOnly = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             this.SimVarUpdate = new System.Windows.Forms.DataGridViewButtonColumn();
+            this.SimVarDelete = new System.Windows.Forms.DataGridViewButtonColumn();
             ((System.ComponentModel.ISupportInitialize)(this.txtSimConnectPort)).BeginInit();
             this.gpConnect.SuspendLayout();
             this.gpRequest.SuspendLayout();
@@ -233,8 +234,8 @@ namespace SimConnectHandler_DemoForm
             this.SimVarUnit,
             this.SimVarValue,
             this.VarIsReadOnly,
-            this.SimVarUpdate});
-            this.dgVariables.EditMode = System.Windows.Forms.DataGridViewEditMode.EditProgrammatically;
+            this.SimVarUpdate,
+            this.SimVarDelete});
             this.dgVariables.Location = new System.Drawing.Point(427, 12);
             this.dgVariables.MultiSelect = false;
             this.dgVariables.Name = "dgVariables";
@@ -242,7 +243,7 @@ namespace SimConnectHandler_DemoForm
             this.dgVariables.RowTemplate.Height = 25;
             this.dgVariables.Size = new System.Drawing.Size(461, 426);
             this.dgVariables.TabIndex = 8;
-            this.dgVariables.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.Update_Click);
+            this.dgVariables.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvButton_Click);
             // 
             // ReqID
             // 
@@ -250,19 +251,21 @@ namespace SimConnectHandler_DemoForm
             this.ReqID.Name = "ReqID";
             this.ReqID.ReadOnly = true;
             this.ReqID.Visible = false;
+            this.ReqID.Width = 80;
             // 
             // SimVarName
             // 
             this.SimVarName.HeaderText = "SimVar";
             this.SimVarName.Name = "SimVarName";
             this.SimVarName.ReadOnly = true;
-            this.SimVarName.Width = 250;
+            this.SimVarName.Width = 200;
             // 
             // SimVarUnit
             // 
             this.SimVarUnit.HeaderText = "Unit";
             this.SimVarUnit.Name = "SimVarUnit";
             this.SimVarUnit.Visible = false;
+            this.SimVarUnit.Width = 150;
             // 
             // SimVarValue
             // 
@@ -285,6 +288,15 @@ namespace SimConnectHandler_DemoForm
             this.SimVarUpdate.ToolTipText = "Update";
             this.SimVarUpdate.UseColumnTextForButtonValue = true;
             this.SimVarUpdate.Width = 50;
+            // 
+            // SimVarDelete
+            // 
+            this.SimVarDelete.HeaderText = "Delete";
+            this.SimVarDelete.Name = "SimVarDelete";
+            this.SimVarDelete.Text = "Delete";
+            this.SimVarDelete.ToolTipText = "Delete";
+            this.SimVarDelete.UseColumnTextForButtonValue = true;
+            this.SimVarDelete.Width = 50;
             // 
             // SimConnectHandler_DemoForm
             // 
@@ -333,5 +345,6 @@ namespace SimConnectHandler_DemoForm
         private System.Windows.Forms.DataGridViewTextBoxColumn SimVarValue;
         private System.Windows.Forms.DataGridViewCheckBoxColumn VarIsReadOnly;
         private System.Windows.Forms.DataGridViewButtonColumn SimVarUpdate;
+        private System.Windows.Forms.DataGridViewButtonColumn SimVarDelete;
     }
 }
