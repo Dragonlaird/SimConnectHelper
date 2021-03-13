@@ -6,6 +6,7 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -69,6 +70,11 @@ namespace SimConnectHandler_DemoForm
         /// <param name="e">Exception containing SimConnect error data</param>
         private void SimError(object sender, IOException e)
         {
+            var errorId = Convert.ToInt32(e.Data["dwID"]);
+            var sendId = Convert.ToInt32(e.Data["dwSendID"]);
+            var indexId = Convert.ToInt32(e.Data["dwIndex"]);
+            var exceptionId = Convert.ToInt32(e.Data["dwException"]);
+            var exceptionType = (string)e.Data["exceptionType"];
             //throw e;
         }
 
@@ -124,11 +130,12 @@ namespace SimConnectHandler_DemoForm
 
         private DataGridViewRow FindRowBySimVarName(string simVarName)
         {
-            foreach (DataGridViewRow row in dgVariables.Rows)
-            {
-                if (row.Cells["SimVarName"].Value?.ToString() == simVarName)
-                    return row;
-            }
+            lock (dgVariables.Rows)
+                foreach (DataGridViewRow row in dgVariables.Rows)
+                {
+                    if (row.Cells["SimVarName"].Value?.ToString() == simVarName)
+                        return row;
+                }
             return null;
         }
 
@@ -153,8 +160,16 @@ namespace SimConnectHandler_DemoForm
                     value, // Value
                     isReadOnly // ReadOnly
                 });
-                if (!isReadOnly)
-                    dgVariables.Rows[rowIdx].Cells["SimVarValue"].ReadOnly = false;
+                dgVariables.Rows[rowIdx].Cells["ReqID"].ReadOnly = true;
+                dgVariables.Rows[rowIdx].Cells["SimVarName"].ReadOnly = true;
+                dgVariables.Rows[rowIdx].Cells["SimVarUnit"].ReadOnly = true;
+                dgVariables.Rows[rowIdx].Cells["VarIsReadOnly"].ReadOnly = true;
+                dgVariables.Rows[rowIdx].Cells["SimVarValue"].ReadOnly = isReadOnly;
+                //ReqID
+                //SimVarName
+                //SimVarUnit
+                //SimVarValue
+                //VarIsReadOnly
                 SimConnectVariable variableRequest = new SimConnectVariable
                 {
                     Name = simVarName,
@@ -172,19 +187,19 @@ namespace SimConnectHandler_DemoForm
                         Request = variableRequest,
                         Value = value
                     };
-                    SendValue(variableValue);
+                    reqId = SendValue(variableValue);
                 }
                 dgVariables.Rows[rowIdx].Cells["ReqID"].Value = reqId;
             }
 
         }
 
-        private void Update_Click(object sender, DataGridViewCellEventArgs e)
+        private void dgvButton_Click(object sender, DataGridViewCellEventArgs e)
         {
-            if(e.ColumnIndex == dgVariables.Columns["SimVarUpdate"].Index)
+            var reqId = (int?)dgVariables.Rows[e.RowIndex].Cells["ReqID"].Value;
+            if (e.ColumnIndex == dgVariables.Columns["SimVarUpdate"].Index)
             {
                 // User wants to refresh the displayed value
-                var reqId = (int?)dgVariables.Rows[e.RowIndex].Cells["ReqID"].Value;
                 if (reqId > -1)
                     SimConnectHandler.GetSimVar((int)reqId);
                 else
@@ -211,11 +226,22 @@ namespace SimConnectHandler_DemoForm
                     }
                 }
             }
+            if (e.ColumnIndex == dgVariables.Columns["SimVarDelete"].Index)
+            {
+                var simVarName = (string)dgVariables.Rows[e.RowIndex].Cells["SimVarName"].Value;
+                var simVarUnit = (string)dgVariables.Rows[e.RowIndex].Cells["SimVarUnit"].Value;
+                SimConnectVariable request = new SimConnectVariable
+                {
+                    Name = simVarName,
+                    Unit = simVarUnit
+                };
+                dgVariables.Rows.RemoveAt(e.RowIndex);
+            }
         }
 
-        private void SendValue(SimConnectVariableValue variableValue)
+        private int SendValue(SimConnectVariableValue variableValue)
         {
-            SimConnectHandler.SetSimVar(variableValue);
+            return SimConnectHandler.SetSimVar(variableValue);
         }
 
         private int SendRequest(SimConnectVariable request, bool FetchLatestValue = false)

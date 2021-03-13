@@ -13,12 +13,12 @@ namespace SimConnectHelper.Common
         internal int ID { get; set; }
 
         internal SimConnectVariable Request { get; set; }
-        internal Type Type => SimVarUnits.DefaultUnits[this.Request.Name].UnitType;
+        internal Type DataType => SimVarUnits.DefaultUnits[this.Request.Name].UnitType;
         internal SIMCONNECT_DATATYPE SimType
         {
             get
             {
-                return SimVarUnits.GetSimVarType(this.Type?.ToString() ?? SimVarUnits.DefaultUnits[this.Request.Name].DefaultUnit);
+                return SimVarUnits.GetSimVarType(this.DataType?.ToString() ?? SimVarUnits.DefaultUnits[this.Request.Name].DefaultUnit);
             }
         }
 

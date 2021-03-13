@@ -234,10 +234,13 @@ namespace SimConnectHelper
             if (SimData != null)
                 try
                 {
+                    var value = data?.dwData;
+                    if (value != null && value.Length == 1 && value[0].GetType() == typeof(SimVarString))
+                        value = new object[] { ((SimVarString)value[0]).Value };
                     var simVarVal = new SimConnectVariableValue
                     {
                         Request = Requests[(int)data.dwRequestID],
-                        Value = data?.dwData
+                        Value = value
                     };
                     SimData.DynamicInvoke(simConnect, simVarVal);
                 }
@@ -260,6 +263,129 @@ namespace SimConnectHelper
                     var ex = new IOException("SimConnect returned an Error, details in Data", null);
                     ex.Source = "SimConnect";
                     ex.Data.Add("data", data);
+                    foreach(var property in data.GetType().GetFields())
+                    {
+                        ex.Data.Add(property.Name, property.GetValue(data));
+                    }
+                    var exceptionType = string.Empty;
+                    switch (Convert.ToInt32(data.dwException))
+                    {
+                        case 0:
+                            exceptionType = "SIMCONNECT_EXCEPTION_NONE";
+                            break;
+                        case 1:
+                            exceptionType = "SIMCONNECT_EXCEPTION_ERROR";
+                            break;
+                        case 2:
+                            exceptionType = "SIMCONNECT_EXCEPTION_SIZE_MISMATCH";
+                            break;
+                        case 3:
+                            exceptionType = "SIMCONNECT_EXCEPTION_UNRECOGNIZED_ID";
+                            break;
+                        case 4:
+                            exceptionType = "SIMCONNECT_EXCEPTION_UNOPENED";
+                            break;
+                        case 5:
+                            exceptionType = "SIMCONNECT_EXCEPTION_VERSION_MISMATCH";
+                            break;
+                        case 6:
+                            exceptionType = "SIMCONNECT_EXCEPTION_TOO_MANY_GROUPS";
+                            break;
+                        case 7:
+                            exceptionType = "SIMCONNECT_EXCEPTION_NAME_UNRECOGNIZED";
+                            break;
+                        case 8:
+                            exceptionType = "SIMCONNECT_EXCEPTION_TOO_MANY_EVENT_NAMES";
+                            break;
+                        case 9:
+                            exceptionType = "SIMCONNECT_EXCEPTION_EVENT_ID_DUPLICATE";
+                            break;
+                        case 10:
+                            exceptionType = "SIMCONNECT_EXCEPTION_TOO_MANY_MAPS";
+                            break;
+                        case 11:
+                            exceptionType = "SIMCONNECT_EXCEPTION_TOO_MANY_OBJECTS";
+                            break;
+                        case 12:
+                            exceptionType = "SIMCONNECT_EXCEPTION_TOO_MANY_REQUESTS";
+                            break;
+                        case 13:
+                            exceptionType = "SIMCONNECT_EXCEPTION_WEATHER_INVALID_PORT";
+                            break;
+                        case 14:
+                            exceptionType = "SIMCONNECT_EXCEPTION_WEATHER_INVALID_METAR";
+                            break;
+                        case 15:
+                            exceptionType = "SIMCONNECT_EXCEPTION_WEATHER_UNABLE_TO_GET_OBSERVATION";
+                            break;
+                        case 16:
+                            exceptionType = "SIMCONNECT_EXCEPTION_WEATHER_UNABLE_TO_CREATE_STATION";
+                            break;
+                        case 17:
+                            exceptionType = "SIMCONNECT_EXCEPTION_WEATHER_UNABLE_TO_REMOVE_STATION";
+                            break;
+                        case 18:
+                            exceptionType = "SIMCONNECT_EXCEPTION_INVALID_DATA_TYPE";
+                            break;
+                        case 19:
+                            exceptionType = "SIMCONNECT_EXCEPTION_INVALID_DATA_SIZE";
+                            break;
+                        case 20:
+                            exceptionType = "SIMCONNECT_EXCEPTION_DATA_ERROR";
+                            break;
+                        case 21:
+                            exceptionType = "SIMCONNECT_EXCEPTION_INVALID_ARRAY";
+                            break;
+                        case 22:
+                            exceptionType = "SIMCONNECT_EXCEPTION_CREATE_OBJECT_FAILED";
+                            break;
+                        case 23:
+                            exceptionType = "SIMCONNECT_EXCEPTION_LOAD_FLIGHTPLAN_FAILED";
+                            break;
+                        case 24:
+                            exceptionType = "SIMCONNECT_EXCEPTION_OPERATION_INVALID_FOR_OJBECT_TYPE";
+                            break;
+                        case 25:
+                            exceptionType = "SIMCONNECT_EXCEPTION_ILLEGAL_OPERATION";
+                            break;
+                        case 26:
+                            exceptionType = "SIMCONNECT_EXCEPTION_ALREADY_SUBSCRIBED";
+                            break;
+                        case 27:
+                            exceptionType = "SIMCONNECT_EXCEPTION_INVALID_ENUM";
+                            break;
+                        case 28:
+                            exceptionType = "SIMCONNECT_EXCEPTION_DEFINITION_ERROR";
+                            break;
+                        case 29:
+                            exceptionType = "SIMCONNECT_EXCEPTION_DUPLICATE_ID";
+                            break;
+                        case 30:
+                            exceptionType = "SIMCONNECT_EXCEPTION_DATUM_ID";
+                            break;
+                        case 31:
+                            exceptionType = "SIMCONNECT_EXCEPTION_OUT_OF_BOUNDS";
+                            break;
+                        case 32:
+                            exceptionType = "SIMCONNECT_EXCEPTION_ALREADY_CREATED";
+                            break;
+                        case 33:
+                            exceptionType = "SIMCONNECT_EXCEPTION_OBJECT_OUTSIDE_REALITY_BUBBLE";
+                            break;
+                        case 34:
+                            exceptionType = "SIMCONNECT_EXCEPTION_OBJECT_CONTAINER";
+                            break;
+                        case 35:
+                            exceptionType = "SIMCONNECT_EXCEPTION_OBJECT_AI";
+                            break;
+                        case 36:
+                            exceptionType = "SIMCONNECT_EXCEPTION_OBJECT_ATC";
+                            break;
+                        case 37:
+                            exceptionType = "SIMCONNECT_EXCEPTION_OBJECT_SCHEDULE";
+                            break;
+                    }
+                    ex.Data.Add("exceptionType", exceptionType);
                     SimError.DynamicInvoke(simConnect, ex);
                 }
                 catch { }
@@ -339,37 +465,46 @@ namespace SimConnectHelper
                     }
                 }
                 // Submit the SimVar request to SimConnect
-                simConnect.AddToDataDefinition(simReq.DefID, request.Name, unit, simReq.SimType, 0.0f, SimConnect.SIMCONNECT_UNUSED);
-                // Tell SimConnect what type of value we are expecting to be returned
-                switch (simReq.Type?.FullName)
+                // m_oSimConnect.AddToDataDefinition(_oSimvarRequest.eDef, _oSimvarRequest.sName, _oSimvarRequest.sUnits, SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
+                try
                 {
-                    case "System.Double":
-                        simConnect.RegisterDataDefineStruct<double>(simReq.DefID);
-                        break;
-                    case "System.UInt16":
-                    case "System.UInt32":
-                    case "System.UInt64":
-                        simConnect.RegisterDataDefineStruct<uint>(simReq.DefID);
-                        break;
-                    case "System.Int16":
-                    case "System.Int32":
-                        simConnect.RegisterDataDefineStruct<int>(simReq.DefID);
-                        break;
-                    case "System.Boolean":
-                        simConnect.RegisterDataDefineStruct<bool>(simReq.DefID);
-                        break;
-                    case "System.Byte":
-                        simConnect.RegisterDataDefineStruct<byte>(simReq.DefID);
-                        break;
-                    case "System.String":
-                        simConnect.RegisterDataDefineStruct<SimVarString>(simReq.DefID);
-                        break;
-                    default:
-                        simConnect.RegisterDataDefineStruct<object>(simReq.DefID); // This will likely fail as variants don't transform well
-                        break;
+                    simConnect.AddToDataDefinition(simReq.DefID, request.Name, unit, simReq.SimType, 0.0f, SimConnect.SIMCONNECT_UNUSED);
+                    // Tell SimConnect what type of value we are expecting to be returned
+                    switch (simReq.DataType?.FullName)
+                    {
+                        case "System.Double":
+                            simConnect.RegisterDataDefineStruct<double>(simReq.DefID);
+                            break;
+                        case "System.UInt16":
+                        case "System.UInt32":
+                        case "System.UInt64":
+                            simConnect.RegisterDataDefineStruct<uint>(simReq.DefID);
+                            break;
+                        case "System.Int16":
+                        case "System.Int32":
+                            simConnect.RegisterDataDefineStruct<int>(simReq.DefID);
+                            break;
+                        case "System.Boolean":
+                            simConnect.RegisterDataDefineStruct<bool>(simReq.DefID);
+                            break;
+                        case "System.Byte":
+                            simConnect.RegisterDataDefineStruct<byte>(simReq.DefID);
+                            break;
+                        case "System.String":
+                            simConnect.RegisterDataDefineStruct<SimVarString>(simReq.DefID);
+                            break;
+                        default:
+                            simConnect.RegisterDataDefineStruct<object>(simReq.DefID); // This will likely fail as variants don't transform well
+                            break;
+                    }
+                    if (frequency != SimConnectUpdateFrequency.Never)
+                        GetSimVar(simReq.ID, DefaultUpdateFrequency); // Request value to be sent back immediately, will auto-update using pre-defined frequency
                 }
-                if (frequency != SimConnectUpdateFrequency.Never)
-                    GetSimVar(simReq.ID, DefaultUpdateFrequency); // Request value to be sent back immediately, will auto-update using pre-defined frequency
+                catch(Exception ex)
+                {
+                    SimConnect_OnRecvException(simConnect, new SIMCONNECT_RECV_EXCEPTION { dwException = (uint)ex.HResult });
+                    return -1;
+                }
                 return simReq.ID;
             }
             return -1;
@@ -390,7 +525,7 @@ namespace SimConnectHelper
                     {
                         var submittedRequest = Requests.First(x => x.Value.Name == request.Name && x.Value.Unit == request.Unit);
                         var requestId = submittedRequest.Key;
-                        simConnect.ClearDataDefinition((SIMVARDEFINITION)requestId);
+                        //simConnect.ClearDataDefinition((SIMVARDEFINITION)requestId);
                         simConnect.ClearClientDataDefinition((SIMVARDEFINITION)requestId);
                         Requests.Remove(requestId);
                         result = true;
@@ -456,16 +591,19 @@ namespace SimConnectHelper
         /// Set the value associated with a SimVar
         /// </summary>
         /// <param name="simVarValue">SimVar and associated value</param>
-        public static void SetSimVar(SimConnectVariableValue simVarValue)
+        public static int SetSimVar(SimConnectVariableValue simVarValue)
         {
             // As for requests, setting values is a 2-step process, reserve the data area,then modify the data it holds
             GetSimVar(simVarValue.Request);
+
             var reqId = GetRequestId(simVarValue.Request);
             if (reqId > -1)
             {
                 // Data area reserved, now set the value
-                simConnect.SetDataOnSimObject((SIMVARDEFINITION)reqId, (uint)reqId, (SIMCONNECT_DATA_SET_FLAG)SimConnect.SIMCONNECT_OBJECT_ID_USER, simVarValue.Value);
+                simConnect.SetDataOnSimObject((SIMVARDEFINITION)reqId, SimConnect.SIMCONNECT_OBJECT_ID_USER, SIMCONNECT_DATA_SET_FLAG.DEFAULT, simVarValue.Value);
+                //simConnect.SetDataOnSimObject((SIMVARDEFINITION)reqId, (uint)reqId, (SIMCONNECT_DATA_SET_FLAG)SimConnect.SIMCONNECT_OBJECT_ID_USER, simVarValue.Value);
             }
+            return reqId;
         }
 
         private static int GetRequestId(SimConnectVariable request)
