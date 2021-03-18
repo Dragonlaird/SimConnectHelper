@@ -31,9 +31,22 @@ namespace SimConnectHelper
         private const int WM_USER_SIMCONNECT = 0x0402;
         private static int RequestID = 0;
         public static Dictionary<int, SimConnectVariable> Requests { get; private set; } = new Dictionary<int, SimConnectVariable>();
+        /// <summary>
+        /// Allow connections to older MSFS applications (untested)
+        /// </summary>
         public static bool UseFSXcompatibleConnection { get; set; } = false;
-        public static bool FSConnected { get; private set; } = false;
+        /// <summary>
+        /// Indicate if we have established a connection to MSFS 2020
+        /// </summary>
+        public static bool IsConnected { get; private set; } = false;
+        /// <summary>
+        /// Details of how we connected to MSFS 2020 (or the last connection type attempted)
+        /// </summary>
         public static SimConnectConfig Connection { get; private set; }
+        /// <summary>
+        /// How often should SimConnect update the values for requested SimVars
+        /// </summary>
+        public static SimConnectUpdateFrequency DefaultUpdateFrequency { get; set; } = SimConnectUpdateFrequency.SIM_Frame;
         /// <summary>
         /// Called whenever SimConnect connects or disconnects with MSFS 2020
         /// </summary>
@@ -46,10 +59,6 @@ namespace SimConnectHelper
         /// Called whenever MSFS 2020 transmits requested data about an object (e.g. SimVar result)
         /// </summary>
         public static EventHandler<SimConnectVariableValue> SimData;
-        /// <summary>
-        /// How often should SimConnect update the values for requested SimVars
-        /// </summary>
-        public static SimConnectUpdateFrequency DefaultUpdateFrequency { get; set; } = SimConnectUpdateFrequency.SIM_Frame;
         /// <summary>
         /// Full path and filename to use for saving a Config file
         /// </summary>
@@ -64,9 +73,9 @@ namespace SimConnectHelper
             {
                 Connect(config);
                 var timeout = DateTime.Now.AddSeconds(1);
-                while (!FSConnected && DateTime.Now < timeout)
+                while (!IsConnected && DateTime.Now < timeout)
                     Thread.Sleep(50);
-                if (FSConnected)
+                if (IsConnected)
                     break;
             }
         }
@@ -162,7 +171,7 @@ namespace SimConnectHelper
         private static void RunMessagePump()
         {
             // Create control to handle windows messages
-            if (!FSConnected)
+            if (!IsConnected)
             {
                 handler = new MessageHandler();
                 handler.CreateHandle();
@@ -398,7 +407,7 @@ namespace SimConnectHelper
         /// <param name="data">Connection info</param>
         private static void SimConnect_OnRecvOpen(SimConnect sender, SIMCONNECT_RECV_OPEN data)
         {
-            FSConnected = true;
+            IsConnected = true;
             if (SimConnected != null)
                 try
                 {
@@ -414,7 +423,7 @@ namespace SimConnectHelper
         /// <param name="data">connection data</param>
         private static void SimConnect_OnRecvQuit(SimConnect sender, SIMCONNECT_RECV data)
         {
-            FSConnected = false;
+            IsConnected = false;
             if (SimConnected != null)
                 try
                 {
@@ -431,7 +440,7 @@ namespace SimConnectHelper
         /// <returns>A unique ID for the submitted request. Use this to request the next value via FetchValueUpdate</returns>
         public static int GetSimVar(SimConnectVariable request, SimConnectUpdateFrequency frequency = SimConnectUpdateFrequency.Never)
         {
-            if (FSConnected)
+            if (IsConnected)
             {
                 var unit = request.Unit;
                 if (unit?.IndexOf("string") > -1)
@@ -472,9 +481,6 @@ namespace SimConnectHelper
                     // Tell SimConnect what type of value we are expecting to be returned
                     switch (simReq.DataType?.FullName)
                     {
-                        case "System.Double":
-                            simConnect.RegisterDataDefineStruct<double>(simReq.DefID);
-                            break;
                         case "System.UInt16":
                         case "System.UInt32":
                         case "System.UInt64":
@@ -493,8 +499,11 @@ namespace SimConnectHelper
                         case "System.String":
                             simConnect.RegisterDataDefineStruct<SimVarString>(simReq.DefID);
                             break;
-                        default:
+                        case "System.Object":
                             simConnect.RegisterDataDefineStruct<object>(simReq.DefID); // This will likely fail as variants don't transform well
+                            break;
+                        default:
+                            simConnect.RegisterDataDefineStruct<double>(simReq.DefID); // We'll presume default values being requested are numeric
                             break;
                     }
                     if (frequency != SimConnectUpdateFrequency.Never)
@@ -517,7 +526,7 @@ namespace SimConnectHelper
         public static bool CancelRequest(SimConnectVariable request)
         {
             var result = false;
-            if (simConnect != null && FSConnected && Requests.Any(x => x.Value.Name == request.Name && x.Value.Unit == request.Unit))
+            if (simConnect != null && IsConnected && Requests.Any(x => x.Value.Name == request.Name && x.Value.Unit == request.Unit))
             {
                 lock (Requests)
                 {
@@ -541,11 +550,11 @@ namespace SimConnectHelper
         /// </summary>
         /// <param name="requestID">ID returned by SendRequest</param>
         /// <param name="frequency">SimVar can be requested manually (SimConnectUpdateFrequency.Never) or auto-sent at a pre-defined frequency</param>
-        public static void GetSimVar(int requestID, SimConnectUpdateFrequency frequency = SimConnectUpdateFrequency.Never)
+        public static void GetSimVar(int requestID, SimConnectUpdateFrequency frequency)
         {
             try
             {
-                if (FSConnected)
+                if (IsConnected)
                     if (frequency == SimConnectUpdateFrequency.Never)
                         simConnect?.RequestDataOnSimObjectType((SIMVARREQUEST)requestID, (SIMVARDEFINITION)requestID, 0, SIMCONNECT_SIMOBJECT_TYPE.USER);
                     else

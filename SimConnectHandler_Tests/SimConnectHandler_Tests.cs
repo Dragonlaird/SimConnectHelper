@@ -26,7 +26,7 @@ namespace SimConnectHandler_Tests
         public void ConnectUseLocalServerConfig_Test()
         {
             SimConnectHandler.Connect(); // Find/Try all defined server connection configurations
-            Assert.IsTrue(SimConnectHandler.FSConnected);
+            Assert.IsTrue(SimConnectHandler.IsConnected);
         }
 
         [TestMethod]
@@ -41,7 +41,7 @@ namespace SimConnectHandler_Tests
         {
             SimConnectHandler.Connect(GetEndPoint());
             Thread.Sleep(1000);
-            Assert.IsTrue(SimConnectHandler.FSConnected);
+            Assert.IsTrue(SimConnectHandler.IsConnected);
         }
 
         [TestMethod]

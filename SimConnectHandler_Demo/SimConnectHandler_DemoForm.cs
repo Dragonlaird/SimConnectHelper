@@ -36,7 +36,7 @@ namespace SimConnectHandler_DemoForm
 
         private void pbConnect_Click(object sender, EventArgs e)
         {
-            if (!SimConnectHandler.FSConnected)
+            if (!SimConnectHandler.IsConnected)
             {
                 var server = txtSimConnectServer.Text;
                 var port = (int)txtSimConnectPort.Value;

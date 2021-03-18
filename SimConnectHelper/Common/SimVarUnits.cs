@@ -707,7 +707,7 @@ namespace SimConnectHelper.Common
             {"INCIDENCE BETA",new SimVarDefinition("INCIDENCE BETA","Sideslip angle","radians",ConvertType("float64"),true,false)},
             {"MAGVAR",new SimVarDefinition("MAGVAR","Magnetic variation","degrees",ConvertType("angl16"),true,false)},
             {"ON ANY RUNWAY",new SimVarDefinition("ON ANY RUNWAY","Whether or not the plane is currently on a runway.","bool",ConvertType("bool"),true,false)},
-            {"PLANE ALTITUDE",new SimVarDefinition("PLANE ALTITUDE","Altitude of aircraft","feet",null,false,false)},
+            {"PLANE ALTITUDE",new SimVarDefinition("PLANE ALTITUDE","Altitude of aircraft","feet",ConvertType("float64"),false,false)},
             {"PLANE ALT ABOVE GROUND",new SimVarDefinition("PLANE ALT ABOVE GROUND","Altitude above the surface","feet",ConvertType("float64"),false,false)},
             {"PLANE ALT ABOVE GROUND MINUS CG",new SimVarDefinition("PLANE ALT ABOVE GROUND MINUS CG","Altitude above the surface minus CG","feet",ConvertType("float64"),false,false)},
             {"PLANE BANK DEGREES",new SimVarDefinition("PLANE BANK DEGREES","Bank angle, although the name mentions degrees the units used are radians","radians",ConvertType("float64"),false,false)},
