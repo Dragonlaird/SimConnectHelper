@@ -37,6 +37,7 @@ namespace SimConnectHandler_DemoForm
             this.cbConnected = new System.Windows.Forms.CheckBox();
             this.gpConnect = new System.Windows.Forms.GroupBox();
             this.gpRequest = new System.Windows.Forms.GroupBox();
+            this.cbReadOnly = new System.Windows.Forms.CheckBox();
             this.txtSimVarValue = new System.Windows.Forms.TextBox();
             this.lblSimVarValue = new System.Windows.Forms.Label();
             this.txtUnit = new System.Windows.Forms.TextBox();
@@ -52,6 +53,7 @@ namespace SimConnectHandler_DemoForm
             this.VarIsReadOnly = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             this.SimVarUpdate = new System.Windows.Forms.DataGridViewButtonColumn();
             this.SimVarDelete = new System.Windows.Forms.DataGridViewButtonColumn();
+            this.txtErrors = new System.Windows.Forms.TextBox();
             ((System.ComponentModel.ISupportInitialize)(this.txtSimConnectPort)).BeginInit();
             this.gpConnect.SuspendLayout();
             this.gpRequest.SuspendLayout();
@@ -143,6 +145,7 @@ namespace SimConnectHandler_DemoForm
             // 
             // gpRequest
             // 
+            this.gpRequest.Controls.Add(this.cbReadOnly);
             this.gpRequest.Controls.Add(this.txtSimVarValue);
             this.gpRequest.Controls.Add(this.lblSimVarValue);
             this.gpRequest.Controls.Add(this.txtUnit);
@@ -156,6 +159,17 @@ namespace SimConnectHandler_DemoForm
             this.gpRequest.TabIndex = 7;
             this.gpRequest.TabStop = false;
             this.gpRequest.Text = "Request";
+            // 
+            // cbReadOnly
+            // 
+            this.cbReadOnly.AutoSize = true;
+            this.cbReadOnly.Enabled = false;
+            this.cbReadOnly.Location = new System.Drawing.Point(179, 101);
+            this.cbReadOnly.Name = "cbReadOnly";
+            this.cbReadOnly.Size = new System.Drawing.Size(85, 19);
+            this.cbReadOnly.TabIndex = 7;
+            this.cbReadOnly.Text = "Read Only?";
+            this.cbReadOnly.UseVisualStyleBackColor = true;
             // 
             // txtSimVarValue
             // 
@@ -298,11 +312,26 @@ namespace SimConnectHandler_DemoForm
             this.SimVarDelete.UseColumnTextForButtonValue = true;
             this.SimVarDelete.Width = 50;
             // 
+            // txtErrors
+            // 
+            this.txtErrors.Enabled = false;
+            this.txtErrors.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
+            this.txtErrors.ForeColor = System.Drawing.Color.Red;
+            this.txtErrors.Location = new System.Drawing.Point(12, 276);
+            this.txtErrors.Multiline = true;
+            this.txtErrors.Name = "txtErrors";
+            this.txtErrors.ReadOnly = true;
+            this.txtErrors.ScrollBars = System.Windows.Forms.ScrollBars.Both;
+            this.txtErrors.Size = new System.Drawing.Size(403, 162);
+            this.txtErrors.TabIndex = 9;
+            this.txtErrors.Text = "Errors:";
+            // 
             // SimConnectHandler_DemoForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(900, 450);
+            this.Controls.Add(this.txtErrors);
             this.Controls.Add(this.dgVariables);
             this.Controls.Add(this.gpRequest);
             this.Controls.Add(this.gpConnect);
@@ -346,5 +375,7 @@ namespace SimConnectHandler_DemoForm
         private System.Windows.Forms.DataGridViewCheckBoxColumn VarIsReadOnly;
         private System.Windows.Forms.DataGridViewButtonColumn SimVarUpdate;
         private System.Windows.Forms.DataGridViewButtonColumn SimVarDelete;
+        private System.Windows.Forms.CheckBox cbReadOnly;
+        private System.Windows.Forms.TextBox txtErrors;
     }
 }

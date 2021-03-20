@@ -32,6 +32,7 @@ namespace SimConnectHandler_DemoForm
             cmbVariable.DisplayMember = "Key";
             cmbVariable.ValueMember = "Key";
             dgVariables.Rows.Clear();
+            cbReadOnly.Checked = simVarVariable.OrderBy(x => x.Key).First().Value.ReadOnly;
         }
 
         private void pbConnect_Click(object sender, EventArgs e)
@@ -75,7 +76,18 @@ namespace SimConnectHandler_DemoForm
             var indexId = Convert.ToInt32(e.Data["dwIndex"]);
             var exceptionId = Convert.ToInt32(e.Data["dwException"]);
             var exceptionType = (string)e.Data["exceptionType"];
+            UpdateErrorText(txtErrors, string.Format("\r\n{0:HH:mm:ss} ({1}) {2}", DateTime.Now, exceptionType, e.Message));
             //throw e;
+        }
+
+        private void UpdateErrorText(object sender, string text)
+        {
+            if (((TextBox)sender).InvokeRequired)
+            {
+                ((TextBox)sender).Invoke(new Action(() => this.Text += text));
+                return;
+            }
+            ((TextBox)sender).Text += text;
         }
 
         /// <summary>
@@ -122,21 +134,18 @@ namespace SimConnectHandler_DemoForm
         {
             var simVar = (KeyValuePair<string, SimVarDefinition>)cmbVariable.SelectedItem;
             txtUnit.Text = simVar.Value.DefaultUnit;
-            if (simVar.Value.ReadOnly)
-                txtSimVarValue.Enabled = false;
-            else
-                txtSimVarValue.Enabled = true;
+            txtSimVarValue.Text = "";
+            //if (simVar.Value.ReadOnly)
+            //    txtSimVarValue.Enabled = false;
+            //else
+            txtSimVarValue.Enabled = true;
+            cbReadOnly.Checked = simVar.Value.ReadOnly;
         }
 
         private DataGridViewRow FindRowBySimVarName(string simVarName)
         {
             lock (dgVariables.Rows)
-                foreach (DataGridViewRow row in dgVariables.Rows)
-                {
-                    if (row.Cells["SimVarName"].Value?.ToString() == simVarName)
-                        return row;
-                }
-            return null;
+                return dgVariables.Rows.Cast<DataGridViewRow>().FirstOrDefault(x => x.Cells["SimVarName"].Value?.ToString() == simVarName);
         }
 
         private void pbSendRequest_Click(object sender, EventArgs e)
@@ -149,22 +158,22 @@ namespace SimConnectHandler_DemoForm
             {
                 var value = "";
                 int reqId = -1;
-                var isReadOnly = simVarDefinition.ReadOnly;
-                if (!isReadOnly)
-                    value = txtSimVarValue.Text;
+                //var isReadOnly = simVarDefinition.ReadOnly;
+                //if (!simVarDefinition.ReadOnly)
+                value = txtSimVarValue.Text;
                 int rowIdx = dgVariables.Rows.Add(new object[]
                 {
                     0, // RecID
                     simVarName, // SimVar
                     simVarDefinition.DefaultUnit, // Units
                     value, // Value
-                    isReadOnly // ReadOnly
+                    simVarDefinition.ReadOnly // ReadOnly
                 });
                 dgVariables.Rows[rowIdx].Cells["ReqID"].ReadOnly = true;
                 dgVariables.Rows[rowIdx].Cells["SimVarName"].ReadOnly = true;
                 dgVariables.Rows[rowIdx].Cells["SimVarUnit"].ReadOnly = true;
                 dgVariables.Rows[rowIdx].Cells["VarIsReadOnly"].ReadOnly = true;
-                dgVariables.Rows[rowIdx].Cells["SimVarValue"].ReadOnly = isReadOnly;
+                dgVariables.Rows[rowIdx].Cells["SimVarValue"].ReadOnly = false;
                 //ReqID
                 //SimVarName
                 //SimVarUnit
@@ -175,7 +184,7 @@ namespace SimConnectHandler_DemoForm
                     Name = simVarName,
                     Unit = simVarDefinition.DefaultUnit
                 };
-                if (isReadOnly)
+                if (!string.IsNullOrEmpty(value))
                 {
                     // Send Request - then update ReqID cell with returned request ID
                     reqId = SendRequest(variableRequest, true);
