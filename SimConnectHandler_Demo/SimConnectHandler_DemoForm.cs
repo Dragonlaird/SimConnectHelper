@@ -33,6 +33,7 @@ namespace SimConnectHandler_DemoForm
             cmbVariable.ValueMember = "Key";
             dgVariables.Rows.Clear();
             cbReadOnly.Checked = simVarVariable.OrderBy(x => x.Key).First().Value.ReadOnly;
+            txtErrors.ReadOnly = false;
         }
 
         private void pbConnect_Click(object sender, EventArgs e)
@@ -47,6 +48,7 @@ namespace SimConnectHandler_DemoForm
                 SimConnectHandler.SimConnected += SimConnected;
                 SimConnectHandler.SimError += SimError;
                 SimConnectHandler.SimData += SimData;
+                SimConnectHandler.SimLog += SimLog;
             }
             else
             {
@@ -54,14 +56,22 @@ namespace SimConnectHandler_DemoForm
             }
         }
 
+        private void SimLog(object sender, SimVarMessage e)
+        {
+            UpdateErrorText(sender, string.Format("[{0}] {1}", e.Severity.ToString().Substring(0, 3), e.Message));
+        }
+
         private void SimData(object sender, SimConnectVariableValue e)
         {
-            var row = FindRowBySimVarName(e.Request.Name);
-            if (row != null)
-                if (e?.Value?.GetType().IsArray == true)
-                    row.Cells["SimVarValue"].Value = ((object[])e.Value)[0].ToString();
-                else
-                    row.Cells["SimVarValue"].Value = e.Value?.ToString();
+            if (e.Value != null)
+            {
+                var row = FindRowBySimVarName(e.Request.Name);
+                if (row != null)
+                {
+                    var value = e.Value.GetType().IsArray ? ((object[])e.Value)[0].ToString() : e.Value.ToString();
+                    row.Cells["SimVarValue"].Value = value;
+                }
+            }
         }
 
         /// <summary>
@@ -82,12 +92,17 @@ namespace SimConnectHandler_DemoForm
 
         private void UpdateErrorText(object sender, string text)
         {
-            if (((TextBox)sender).InvokeRequired)
+            if (txtErrors.InvokeRequired)
             {
-                ((TextBox)sender).Invoke(new Action(() => this.Text += text));
+                txtErrors.Invoke(new Action(() => UpdateErrorText(sender, text)));
                 return;
             }
-            ((TextBox)sender).Text += text;
+            txtErrors.Text += string.Format("{0}\r\n", text);
+            while (txtErrors.Text.Count(x => x == '\r') > 100)
+                txtErrors.Text = txtErrors.Text.Substring(txtErrors.Text.IndexOf('\r') + 2);
+            txtErrors.SelectionStart = txtErrors.Text.Length;
+            txtErrors.ScrollToCaret();
+            txtErrors.Update();
         }
 
         /// <summary>
@@ -145,7 +160,14 @@ namespace SimConnectHandler_DemoForm
         private DataGridViewRow FindRowBySimVarName(string simVarName)
         {
             lock (dgVariables.Rows)
-                return dgVariables.Rows.Cast<DataGridViewRow>().FirstOrDefault(x => x.Cells["SimVarName"].Value?.ToString() == simVarName);
+                try
+                {
+                    foreach (DataGridViewRow row in dgVariables.Rows)
+                        if (row.Cells["SimVarName"].Value?.ToString() == simVarName)
+                            return row;
+                }
+                catch { } // If rows are updated whilst we were iterating through the collection, ignore it
+            return null;
         }
 
         private void pbSendRequest_Click(object sender, EventArgs e)
@@ -184,7 +206,7 @@ namespace SimConnectHandler_DemoForm
                     Name = simVarName,
                     Unit = simVarDefinition.DefaultUnit
                 };
-                if (!string.IsNullOrEmpty(value))
+                if (string.IsNullOrEmpty(value))
                 {
                     // Send Request - then update ReqID cell with returned request ID
                     reqId = SendRequest(variableRequest, true);

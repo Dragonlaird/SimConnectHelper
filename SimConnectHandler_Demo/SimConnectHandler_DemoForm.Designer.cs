@@ -314,17 +314,15 @@ namespace SimConnectHandler_DemoForm
             // 
             // txtErrors
             // 
-            this.txtErrors.Enabled = false;
             this.txtErrors.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
             this.txtErrors.ForeColor = System.Drawing.Color.Red;
             this.txtErrors.Location = new System.Drawing.Point(12, 276);
             this.txtErrors.Multiline = true;
             this.txtErrors.Name = "txtErrors";
-            this.txtErrors.ReadOnly = true;
             this.txtErrors.ScrollBars = System.Windows.Forms.ScrollBars.Both;
             this.txtErrors.Size = new System.Drawing.Size(403, 162);
             this.txtErrors.TabIndex = 9;
-            this.txtErrors.Text = "Errors:";
+            this.txtErrors.WordWrap = false;
             // 
             // SimConnectHandler_DemoForm
             // 
