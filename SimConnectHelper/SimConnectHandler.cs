@@ -246,7 +246,7 @@ namespace SimConnectHelper
 
         private static void SimConnect_OnRecvSimobjectData(SimConnect sender, SIMCONNECT_RECV_SIMOBJECT_DATA data)
         {
-            WriteLog("Start SimConnect_OnRecvSimobjectData(SimConnect, SIMCONNECT_RECV_SIMOBJECT_DATA);");
+            //WriteLog("Start SimConnect_OnRecvSimobjectData(SimConnect, SIMCONNECT_RECV_SIMOBJECT_DATA);");
             if (simConnect != null) {
                 var newData = new SIMCONNECT_RECV_SIMOBJECT_DATA_BYTYPE
                 {
@@ -264,7 +264,7 @@ namespace SimConnectHelper
                 };
                 SimConnect_OnRecvSimobjectDataByType(sender, newData);
             }
-            WriteLog("End SimConnect_OnRecvSimobjectData(SimConnect, SIMCONNECT_RECV_SIMOBJECT_DATA);");
+            //WriteLog("End SimConnect_OnRecvSimobjectData(SimConnect, SIMCONNECT_RECV_SIMOBJECT_DATA);");
         }
 
         /// <summary>
@@ -274,7 +274,7 @@ namespace SimConnectHelper
         /// <param name="data">Object Data</param>
         private static void SimConnect_OnRecvSimobjectDataByType(SimConnect sender, SIMCONNECT_RECV_SIMOBJECT_DATA_BYTYPE data)
         {
-            WriteLog("Start SimConnect_OnRecvSimobjectDataByType(SimConnect, SIMCONNECT_RECV_SIMOBJECT_DATA_BYTYPE);");
+            //WriteLog("Start SimConnect_OnRecvSimobjectDataByType(SimConnect, SIMCONNECT_RECV_SIMOBJECT_DATA_BYTYPE);");
             if (SimData != null)
                 try
                 {
@@ -286,13 +286,13 @@ namespace SimConnectHelper
                         Request = Requests[(int)data.dwRequestID],
                         Value = value
                     };
-                    SimData.DynamicInvoke(simConnect, simVarVal);
+                    new Task(new Action(() => SimData.DynamicInvoke(simConnect, simVarVal))).Start();
                 }
                 catch(Exception ex)
                 {
                     WriteLog(string.Format("SimConnect_OnRecvSimobjectDataByType Error: {0}", ex.Message), EventLogEntryType.Error);
                 }
-            WriteLog("End SimConnect_OnRecvSimobjectDataByType(SimConnect, SIMCONNECT_RECV_SIMOBJECT_DATA_BYTYPE);");
+            //WriteLog("End SimConnect_OnRecvSimobjectDataByType(SimConnect, SIMCONNECT_RECV_SIMOBJECT_DATA_BYTYPE);");
         }
 
         /// <summary>
@@ -703,7 +703,7 @@ namespace SimConnectHelper
         /// <param name="msg">Message from sender</param>
         private static void MessageReceived(object sender, Message msg)
         {
-            WriteLog("Start MessageReceived(object, Message);");
+            //WriteLog("Start MessageReceived(object, Message);");
             if (msg.Msg == WM_USER_SIMCONNECT && simConnect != null)
                 try
                 {
@@ -715,7 +715,7 @@ namespace SimConnectHelper
                 {
                     // Seems to happen if FS is shutting down or when we disconnect
                 }
-            WriteLog("End MessageReceived(object, Message);");
+            //WriteLog("End MessageReceived(object, Message);");
         }
 
         /// <summary>
@@ -731,6 +731,10 @@ namespace SimConnectHelper
             return ConfigFilePath;
         }
 
+        /// <summary>
+        /// Read the MSFS 2020 XML Config file to find all permitted connection types
+        /// </summary>
+        /// <returns>List of connection configurations</returns>
         private static List<SimConnectConfig> GetLocalFSConnections()
         {
             WriteLog("Start GetLocalFSConnections();");
@@ -749,11 +753,15 @@ namespace SimConnectHelper
                         SimConnectConfig config = GetConfigFromXml(xmlNode);
                         configs.Add(config);
                     }
-                    catch { }
+                    catch (Exception ex)
+                    {
+                        WriteLog(string.Format("Unable to parse XML Connection: {0}", ex.Message), EventLogEntryType.Warning);
+                    }
                 }
             }
-            catch
+            catch (Exception ex)
             {
+                WriteLog(string.Format("Unable to open XML config: {0}", ex.Message), EventLogEntryType.Error);
             }
             WriteLog("End GetLocalFSConnections();");
             return configs;
