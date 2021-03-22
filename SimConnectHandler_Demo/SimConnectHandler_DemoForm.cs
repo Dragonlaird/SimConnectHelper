@@ -148,6 +148,8 @@ namespace SimConnectHandler_DemoForm
         private void Variable_Changed(object sender, EventArgs e)
         {
             var simVar = (KeyValuePair<string, SimVarDefinition>)cmbVariable.SelectedItem;
+            txtDescription.Text = simVar.Value.Description;
+            toolTip.SetToolTip(txtDescription, txtDescription.Text);
             txtUnit.Text = simVar.Value.DefaultUnit;
             txtSimVarValue.Text = "";
             //if (simVar.Value.ReadOnly)

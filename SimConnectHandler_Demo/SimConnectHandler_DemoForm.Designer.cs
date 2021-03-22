@@ -29,6 +29,7 @@ namespace SimConnectHandler_DemoForm
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             this.lblSimConnectServer = new System.Windows.Forms.Label();
             this.txtSimConnectServer = new System.Windows.Forms.TextBox();
             this.lblSimConnectPort = new System.Windows.Forms.Label();
@@ -37,6 +38,8 @@ namespace SimConnectHandler_DemoForm
             this.cbConnected = new System.Windows.Forms.CheckBox();
             this.gpConnect = new System.Windows.Forms.GroupBox();
             this.gpRequest = new System.Windows.Forms.GroupBox();
+            this.txtDescription = new System.Windows.Forms.TextBox();
+            this.lblDescription = new System.Windows.Forms.Label();
             this.cbReadOnly = new System.Windows.Forms.CheckBox();
             this.txtSimVarValue = new System.Windows.Forms.TextBox();
             this.lblSimVarValue = new System.Windows.Forms.Label();
@@ -54,6 +57,7 @@ namespace SimConnectHandler_DemoForm
             this.SimVarUpdate = new System.Windows.Forms.DataGridViewButtonColumn();
             this.SimVarDelete = new System.Windows.Forms.DataGridViewButtonColumn();
             this.txtErrors = new System.Windows.Forms.TextBox();
+            this.toolTip = new System.Windows.Forms.ToolTip(this.components);
             ((System.ComponentModel.ISupportInitialize)(this.txtSimConnectPort)).BeginInit();
             this.gpConnect.SuspendLayout();
             this.gpRequest.SuspendLayout();
@@ -145,6 +149,8 @@ namespace SimConnectHandler_DemoForm
             // 
             // gpRequest
             // 
+            this.gpRequest.Controls.Add(this.txtDescription);
+            this.gpRequest.Controls.Add(this.lblDescription);
             this.gpRequest.Controls.Add(this.cbReadOnly);
             this.gpRequest.Controls.Add(this.txtSimVarValue);
             this.gpRequest.Controls.Add(this.lblSimVarValue);
@@ -155,16 +161,33 @@ namespace SimConnectHandler_DemoForm
             this.gpRequest.Controls.Add(this.lblVariable);
             this.gpRequest.Location = new System.Drawing.Point(13, 136);
             this.gpRequest.Name = "gpRequest";
-            this.gpRequest.Size = new System.Drawing.Size(381, 133);
+            this.gpRequest.Size = new System.Drawing.Size(402, 161);
             this.gpRequest.TabIndex = 7;
             this.gpRequest.TabStop = false;
             this.gpRequest.Text = "Request";
+            // 
+            // txtDescription
+            // 
+            this.txtDescription.Location = new System.Drawing.Point(65, 58);
+            this.txtDescription.Name = "txtDescription";
+            this.txtDescription.ReadOnly = true;
+            this.txtDescription.Size = new System.Drawing.Size(310, 23);
+            this.txtDescription.TabIndex = 9;
+            // 
+            // lblDescription
+            // 
+            this.lblDescription.AutoSize = true;
+            this.lblDescription.Location = new System.Drawing.Point(24, 63);
+            this.lblDescription.Name = "lblDescription";
+            this.lblDescription.Size = new System.Drawing.Size(35, 15);
+            this.lblDescription.TabIndex = 8;
+            this.lblDescription.Text = "Desc:";
             // 
             // cbReadOnly
             // 
             this.cbReadOnly.AutoSize = true;
             this.cbReadOnly.Enabled = false;
-            this.cbReadOnly.Location = new System.Drawing.Point(179, 101);
+            this.cbReadOnly.Location = new System.Drawing.Point(179, 123);
             this.cbReadOnly.Name = "cbReadOnly";
             this.cbReadOnly.Size = new System.Drawing.Size(85, 19);
             this.cbReadOnly.TabIndex = 7;
@@ -174,7 +197,7 @@ namespace SimConnectHandler_DemoForm
             // txtSimVarValue
             // 
             this.txtSimVarValue.Enabled = false;
-            this.txtSimVarValue.Location = new System.Drawing.Point(65, 98);
+            this.txtSimVarValue.Location = new System.Drawing.Point(65, 120);
             this.txtSimVarValue.Name = "txtSimVarValue";
             this.txtSimVarValue.Size = new System.Drawing.Size(107, 23);
             this.txtSimVarValue.TabIndex = 6;
@@ -182,7 +205,7 @@ namespace SimConnectHandler_DemoForm
             // lblSimVarValue
             // 
             this.lblSimVarValue.AutoSize = true;
-            this.lblSimVarValue.Location = new System.Drawing.Point(21, 101);
+            this.lblSimVarValue.Location = new System.Drawing.Point(21, 123);
             this.lblSimVarValue.Name = "lblSimVarValue";
             this.lblSimVarValue.Size = new System.Drawing.Size(38, 15);
             this.lblSimVarValue.TabIndex = 5;
@@ -190,7 +213,7 @@ namespace SimConnectHandler_DemoForm
             // 
             // txtUnit
             // 
-            this.txtUnit.Location = new System.Drawing.Point(65, 64);
+            this.txtUnit.Location = new System.Drawing.Point(65, 86);
             this.txtUnit.Name = "txtUnit";
             this.txtUnit.ReadOnly = true;
             this.txtUnit.Size = new System.Drawing.Size(310, 23);
@@ -199,7 +222,7 @@ namespace SimConnectHandler_DemoForm
             // lblUnit
             // 
             this.lblUnit.AutoSize = true;
-            this.lblUnit.Location = new System.Drawing.Point(27, 68);
+            this.lblUnit.Location = new System.Drawing.Point(27, 90);
             this.lblUnit.Name = "lblUnit";
             this.lblUnit.Size = new System.Drawing.Size(32, 15);
             this.lblUnit.TabIndex = 3;
@@ -207,7 +230,7 @@ namespace SimConnectHandler_DemoForm
             // 
             // pbSendRequest
             // 
-            this.pbSendRequest.Location = new System.Drawing.Point(267, 98);
+            this.pbSendRequest.Location = new System.Drawing.Point(267, 120);
             this.pbSendRequest.Name = "pbSendRequest";
             this.pbSendRequest.Size = new System.Drawing.Size(108, 23);
             this.pbSendRequest.TabIndex = 2;
@@ -255,7 +278,7 @@ namespace SimConnectHandler_DemoForm
             this.dgVariables.Name = "dgVariables";
             this.dgVariables.RowHeadersVisible = false;
             this.dgVariables.RowTemplate.Height = 25;
-            this.dgVariables.Size = new System.Drawing.Size(461, 426);
+            this.dgVariables.Size = new System.Drawing.Size(461, 486);
             this.dgVariables.TabIndex = 8;
             this.dgVariables.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvButton_Click);
             // 
@@ -316,11 +339,11 @@ namespace SimConnectHandler_DemoForm
             // 
             this.txtErrors.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
             this.txtErrors.ForeColor = System.Drawing.Color.Red;
-            this.txtErrors.Location = new System.Drawing.Point(12, 276);
+            this.txtErrors.Location = new System.Drawing.Point(12, 303);
             this.txtErrors.Multiline = true;
             this.txtErrors.Name = "txtErrors";
             this.txtErrors.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-            this.txtErrors.Size = new System.Drawing.Size(403, 162);
+            this.txtErrors.Size = new System.Drawing.Size(403, 195);
             this.txtErrors.TabIndex = 9;
             this.txtErrors.WordWrap = false;
             // 
@@ -328,7 +351,7 @@ namespace SimConnectHandler_DemoForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(900, 450);
+            this.ClientSize = new System.Drawing.Size(900, 510);
             this.Controls.Add(this.txtErrors);
             this.Controls.Add(this.dgVariables);
             this.Controls.Add(this.gpRequest);
@@ -375,5 +398,8 @@ namespace SimConnectHandler_DemoForm
         private System.Windows.Forms.DataGridViewButtonColumn SimVarDelete;
         private System.Windows.Forms.CheckBox cbReadOnly;
         private System.Windows.Forms.TextBox txtErrors;
+        private System.Windows.Forms.TextBox txtDescription;
+        private System.Windows.Forms.Label lblDescription;
+        private System.Windows.Forms.ToolTip toolTip;
     }
 }
