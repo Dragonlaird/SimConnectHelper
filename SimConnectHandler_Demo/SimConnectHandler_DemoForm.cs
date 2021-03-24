@@ -34,6 +34,14 @@ namespace SimConnectHandler_DemoForm
             dgVariables.Rows.Clear();
             cbReadOnly.Checked = simVarVariable.OrderBy(x => x.Key).First().Value.ReadOnly;
             txtErrors.ReadOnly = false;
+            cmbFrequency.DataSource = null;
+            var cmbDataSource = new List<string>();
+            foreach(var freq in Enum.GetValues(typeof(SimConnectUpdateFrequency)).Cast<SimConnectUpdateFrequency>())
+            {
+                cmbDataSource.Add(freq.ToString());
+            }
+            cmbDataSource.Add("Milliseconds");
+            cmbFrequency.DataSource = cmbDataSource;
         }
 
         private void pbConnect_Click(object sender, EventArgs e)
@@ -185,17 +193,22 @@ namespace SimConnectHandler_DemoForm
                 //var isReadOnly = simVarDefinition.ReadOnly;
                 //if (!simVarDefinition.ReadOnly)
                 value = txtSimVarValue.Text;
+                var frequency = cmbFrequency.SelectedItem;
+                if (frequency.ToString() == "Milliseconds")
+                    frequency = (int)txtMilliseconds.Value;
                 int rowIdx = dgVariables.Rows.Add(new object[]
                 {
                     0, // RecID
                     simVarName, // SimVar
                     simVarDefinition.DefaultUnit, // Units
+                    frequency.ToString(), // Frequency
                     value, // Value
                     simVarDefinition.ReadOnly // ReadOnly
                 });
                 dgVariables.Rows[rowIdx].Cells["ReqID"].ReadOnly = true;
                 dgVariables.Rows[rowIdx].Cells["SimVarName"].ReadOnly = true;
                 dgVariables.Rows[rowIdx].Cells["SimVarUnit"].ReadOnly = true;
+                dgVariables.Rows[rowIdx].Cells["SimVarFreq"].ReadOnly = true;
                 dgVariables.Rows[rowIdx].Cells["VarIsReadOnly"].ReadOnly = true;
                 dgVariables.Rows[rowIdx].Cells["SimVarValue"].ReadOnly = false;
                 //ReqID
@@ -211,7 +224,7 @@ namespace SimConnectHandler_DemoForm
                 if (string.IsNullOrEmpty(value))
                 {
                     // Send Request - then update ReqID cell with returned request ID
-                    reqId = SendRequest(variableRequest, true);
+                    reqId = SendRequest(variableRequest, (int)Enum.Parse(typeof(SimConnectUpdateFrequency),frequency.ToString()));
                 }
                 else
                 {
@@ -241,13 +254,14 @@ namespace SimConnectHandler_DemoForm
                         == ((DataGridViewCheckBoxCell)dgVariables.Rows[e.RowIndex].Cells["VarIsReadOnly"]).TrueValue;
                     var simVarName = (string)dgVariables.Rows[e.RowIndex].Cells["SimVarName"].Value;
                     var simVarUnit = (string)dgVariables.Rows[e.RowIndex].Cells["SimVarUnit"].Value;
+                    var frequency = dgVariables.Rows[e.RowIndex].Cells["SimVarFreq"].Value;
                     SimConnectVariable request = new SimConnectVariable
                     {
                         Name = simVarName,
                         Unit = simVarUnit
                     };
                     if (isReadOnly)
-                        dgVariables.Rows[e.RowIndex].Cells["ReqID"].Value = SendRequest(request, true);
+                        dgVariables.Rows[e.RowIndex].Cells["ReqID"].Value = SendRequest(request, int.Parse(frequency.ToString()));
                     else
                     {
                         var value = dgVariables.Rows[e.RowIndex].Cells["SimVarValue"].Value;
@@ -277,14 +291,22 @@ namespace SimConnectHandler_DemoForm
             return SimConnectHandler.SetSimVar(variableValue);
         }
 
-        private int SendRequest(SimConnectVariable request, bool FetchLatestValue = false)
+        private int SendRequest(SimConnectVariable request, int frequency)
         {
-            return SimConnectHandler.GetSimVar(request, FetchLatestValue ? SimConnectHandler.DefaultUpdateFrequency : SimConnectUpdateFrequency.Never); // If FetchLatestValue = true; Auto-update
+            return SimConnectHandler.GetSimVar(request, frequency); // If FetchLatestValue = true; Auto-update
         }
 
         private void FormClose_Click(object sender, FormClosingEventArgs e)
         {
             SimConnectHandler.Disconnect();
+        }
+
+        private void Frequency_Changed(object sender, EventArgs e)
+        {
+            if (cmbFrequency.SelectedItem.ToString() == "Milliseconds")
+                txtMilliseconds.Enabled = true;
+            else
+                txtMilliseconds.Enabled = false;
         }
     }
 }
