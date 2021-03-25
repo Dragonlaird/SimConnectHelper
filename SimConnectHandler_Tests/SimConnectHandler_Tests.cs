@@ -30,6 +30,15 @@ namespace SimConnectHandler_Tests
         }
 
         [TestMethod]
+        public void Disconnect_Test()
+        {
+            SimConnectHandler.Connect(); // Find/Try all defined server connection configurations
+            Assert.IsTrue(SimConnectHandler.IsConnected);
+            SimConnectHandler.Disconnect();
+            Assert.IsFalse(SimConnectHandler.IsConnected);
+        }
+
+        [TestMethod]
         public void ConnectConfiguration_Test()
         {
             SimConnectHandler.Connect(); // Find/Try all defined server connection configurations
@@ -45,7 +54,34 @@ namespace SimConnectHandler_Tests
         }
 
         [TestMethod]
-        public void RequestSimVar_Test()
+        public void RequestSimVar_Test_In_Ms()
+        {
+            result = null;
+            SimConnectHandler.SimError += SimConnect_Error;
+            SimConnectHandler.SimConnected += SimConnect_Connection;
+            SimConnectHandler.SimData += SimConnect_DataReceived;
+            SimConnectHandler.Connect();
+            var variable = new SimConnectVariable
+            {
+                Name = "AMBIENT WIND VELOCITY",
+                Unit = "knots"
+            };
+            var requestID = SimConnectHandler.GetSimVar(variable, 50);
+
+            // Wait up to 5 seconds for MSFS to return the requested value
+            DateTime endTime = DateTime.Now.AddSeconds(5);
+            while (result == null && DateTime.Now < endTime)
+            {
+                Thread.Sleep(100);
+            }
+            SimConnectHandler.CancelRequest(variable);
+            SimConnectHandler.Disconnect();
+            Assert.IsNotNull(result);
+        }
+
+
+        [TestMethod]
+        public void RequestSimVar_Test_Once()
         {
             result = null;
             SimConnectHandler.SimError += SimConnect_Error;
@@ -65,6 +101,34 @@ namespace SimConnectHandler_Tests
             {
                 Thread.Sleep(100);
             }
+            SimConnectHandler.CancelRequest(variable);
+            SimConnectHandler.Disconnect();
+            Assert.IsNotNull(result);
+        }
+
+        [TestMethod]
+        public void RequestSimVar_Test_SimFrame()
+        {
+            result = null;
+            SimConnectHandler.SimError += SimConnect_Error;
+            SimConnectHandler.SimConnected += SimConnect_Connection;
+            SimConnectHandler.SimData += SimConnect_DataReceived;
+            SimConnectHandler.Connect();
+            var variable = new SimConnectVariable
+            {
+                Name = "AMBIENT WIND VELOCITY",
+                Unit = "knots"
+            };
+            var requestID = SimConnectHandler.GetSimVar(variable, SimConnectUpdateFrequency.SIM_Frame);
+
+            // Wait up to 5 seconds for MSFS to return the requested value
+            DateTime endTime = DateTime.Now.AddSeconds(5);
+            while (result == null && DateTime.Now < endTime)
+            {
+                Thread.Sleep(100);
+            }
+            SimConnectHandler.CancelRequest(variable);
+            SimConnectHandler.Disconnect();
             Assert.IsNotNull(result);
         }
 
