@@ -33,7 +33,7 @@ namespace SimConnectHandler_DemoForm
             cmbVariable.ValueMember = "Key";
             dgVariables.Rows.Clear();
             cbReadOnly.Checked = simVarVariable.OrderBy(x => x.Key).First().Value.ReadOnly;
-            txtErrors.ReadOnly = false;
+            txtErrors.ReadOnly = true;
             cmbFrequency.DataSource = null;
             var cmbDataSource = new List<string>();
             foreach(var freq in Enum.GetValues(typeof(SimConnectUpdateFrequency)).Cast<SimConnectUpdateFrequency>())
@@ -91,10 +91,11 @@ namespace SimConnectHandler_DemoForm
         {
             var errorId = Convert.ToInt32(e.Data["dwID"]);
             var sendId = Convert.ToInt32(e.Data["dwSendID"]);
-            var indexId = Convert.ToInt32(e.Data["dwIndex"]);
+            var indexId = Convert.ToDouble(e.Data["dwIndex"]);
             var exceptionId = Convert.ToInt32(e.Data["dwException"]);
             var exceptionType = (string)e.Data["exceptionType"];
-            UpdateErrorText(txtErrors, string.Format("\r\n{0:HH:mm:ss} ({1}) {2}", DateTime.Now, exceptionType, e.Message));
+            var errorMessage = string.Format("\terrorId: {0}\r\n\tsendId: {1}\r\n\tindexId: {2}\r\n\texceptionId: {3}\r\n\texceptionType: {4}", errorId, sendId, indexId, exceptionId, exceptionType);
+            UpdateErrorText(txtErrors, string.Format("\r\n{0:HH:mm:ss} ({1}) {2}\r\nData:\r\n{3}", DateTime.Now, exceptionType, e.Message, errorMessage));
             //throw e;
         }
 
@@ -282,6 +283,7 @@ namespace SimConnectHandler_DemoForm
                     Name = simVarName,
                     Unit = simVarUnit
                 };
+                SimConnectHandler.CancelRequest(request);
                 dgVariables.Rows.RemoveAt(e.RowIndex);
             }
         }

@@ -93,7 +93,7 @@ namespace SimConnectHandler_Tests
                 Name = "AMBIENT WIND VELOCITY",
                 Unit = "knots"
             };
-            var requestID = SimConnectHandler.GetSimVar(variable, SimConnectUpdateFrequency.Once);
+            var requestID = SimConnectHandler.RegisterSimVar(variable, SimConnectUpdateFrequency.Once);
 
             // Wait up to 5 seconds for MSFS to return the requested value
             DateTime endTime = DateTime.Now.AddSeconds(5);
@@ -119,7 +119,7 @@ namespace SimConnectHandler_Tests
                 Name = "AMBIENT WIND VELOCITY",
                 Unit = "knots"
             };
-            var requestID = SimConnectHandler.GetSimVar(variable, SimConnectUpdateFrequency.SIM_Frame);
+            var requestID = SimConnectHandler.RegisterSimVar(variable, SimConnectUpdateFrequency.SIM_Frame);
 
             // Wait up to 5 seconds for MSFS to return the requested value
             DateTime endTime = DateTime.Now.AddSeconds(5);

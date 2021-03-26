@@ -283,12 +283,17 @@ namespace SimConnectHelper
                     var value = data?.dwData;
                     if (value != null && value.Length == 1 && value[0].GetType() == typeof(SimVarString))
                         value = new object[] { ((SimVarString)value[0]).Value };
-                    var simVarVal = new SimConnectVariableValue
+                    // May receive a value for a recently deleted request, ignore it
+                    if (Requests.Any(x=> x.Key == (int)data.dwRequestID))
                     {
-                        Request = Requests[(int)data.dwRequestID],
-                        Value = value
-                    };
-                    new Task(new Action(() => SimData.DynamicInvoke(simConnect, simVarVal))).Start();
+                        var request = Requests.First(x => x.Key == (int)data.dwRequestID).Value;
+                        var simVarVal = new SimConnectVariableValue
+                        {
+                            Request = request,
+                            Value = value
+                        };
+                        new Task(new Action(() => SimData.DynamicInvoke(simConnect, simVarVal))).Start();
+                    }
                 }
                 catch(Exception ex)
                 {
@@ -491,7 +496,7 @@ namespace SimConnectHelper
         /// <param name="request">SimVar to fetch from SimConnect</param>
         /// <param name="frequency">How frequently should SimConnect provide an updated value?</param>
         /// <returns>A unique ID for the submitted request. Use this to request the next value via FetchValueUpdate</returns>
-        public static int GetSimVar(SimConnectVariable request, SimConnectUpdateFrequency frequency = SimConnectUpdateFrequency.Never)
+        public static int RegisterSimVar(SimConnectVariable request, SimConnectUpdateFrequency frequency = SimConnectUpdateFrequency.Never)
         {
             WriteLog("Start GetSimVar(SimConnectVariable, SimConnectUpdateFrequency)");
             if (IsConnected)
@@ -499,36 +504,10 @@ namespace SimConnectHelper
                 var unit = request.Unit;
                 if (unit?.IndexOf("string") > -1)
                 {
-                    unit = null;
+                    unit = null; // String values don't actually have a unit
                 }
-                SimVarRequest simReq;
-                lock (Requests)
-                {
-                    if (Requests.Any(x => x.Value.Name.Equals(request.Name, StringComparison.InvariantCultureIgnoreCase)
-                        && x.Value.Unit.Equals(request.Unit, StringComparison.InvariantCultureIgnoreCase)))
-                    {
-                        // Re-use a previously requested variable for retransmission to SimConnect
-                        var reqId = GetRequestId(request);
-                        simReq = new SimVarRequest
-                        {
-                            ID = reqId,
-                            Request = request
-                        };
-                    }
-                    else
-                    {
-                        // Fetch the values suitable for transmission to SimConnect
-                        simReq = new SimVarRequest
-                        {
-                            ID = RequestID++,
-                            Request = request
-                        };
-                        // New SimVar requested - add it to our list
-                        Requests.Add((int)simReq.ReqID, simReq.Request);
-                    }
-                }
+                SimVarRequest simReq = AddRequest(request);
                 // Submit the SimVar request to SimConnect
-                // m_oSimConnect.AddToDataDefinition(_oSimvarRequest.eDef, _oSimvarRequest.sName, _oSimvarRequest.sUnits, SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
                 try
                 {
                     simConnect.AddToDataDefinition(simReq.DefID, request.Name, unit, simReq.SimType, 0.0f, SimConnect.SIMCONNECT_UNUSED);
@@ -563,7 +542,7 @@ namespace SimConnectHelper
                     if (frequency != SimConnectUpdateFrequency.Never)
                         GetSimVar(simReq.ID, DefaultUpdateFrequency); // Request value to be sent back immediately, will auto-update using pre-defined frequency
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
                     WriteLog(string.Format("SimConnect Error: {0}\r\nEnd GetSimVar(SimConnectVariable, SimConnectUpdateFrequency)", ex.Message), EventLogEntryType.Error);
                     SimConnect_OnRecvException(simConnect, new SIMCONNECT_RECV_EXCEPTION { dwException = (uint)ex.HResult });
@@ -576,6 +555,37 @@ namespace SimConnectHelper
             return -1;
         }
 
+        internal static SimVarRequest AddRequest(SimConnectVariable request)
+        {
+            SimVarRequest simReq;
+            lock (Requests)
+            {
+                if (Requests.Any(x => x.Value.Name.Equals(request.Name, StringComparison.InvariantCultureIgnoreCase)
+                    && x.Value.Unit.Equals(request.Unit, StringComparison.InvariantCultureIgnoreCase)))
+                {
+                    // Re-use a previously requested variable for retransmission to SimConnect
+                    var reqId = GetRequestId(request);
+                    simReq = new SimVarRequest
+                    {
+                        ID = reqId,
+                        Request = request
+                    };
+                }
+                else
+                {
+                    // Fetch the values suitable for transmission to SimConnect
+                    simReq = new SimVarRequest
+                    {
+                        ID = RequestID++,
+                        Request = request
+                    };
+                    // New SimVar requested - add it to our list
+                    Requests.Add((int)simReq.ReqID, simReq.Request);
+                }
+            }
+            return simReq;
+        }
+
         /// <summary>
         /// Request a SimVar value using a custom-defined frequency
         /// </summary>
@@ -585,13 +595,20 @@ namespace SimConnectHelper
         public static int GetSimVar(SimConnectVariable request, int frequencyInMs)
         {
             WriteLog("Start GetSimVar(SimConnectVariable, int)");
-            if (frequencyInMs > (int)SIMCONNECT_PERIOD.VISUAL_FRAME)
+            var simReq = AddRequest(request);
+            var requestId = (int)simReq.ReqID;
+            if (frequencyInMs > (int)SIMCONNECT_PERIOD.SECOND)
             {
-                return GetSimVar(request, (SimConnectUpdateFrequency)frequencyInMs);
+                if (requestId > -1)
+                    GetSimVar(requestId, (SimConnectUpdateFrequency)frequencyInMs);
             }
-            WriteLog(string.Format("GetSimVar(SimConnectVariable, int) error: Frequency must be > {0} ms", (int)SIMCONNECT_PERIOD.VISUAL_FRAME), EventLogEntryType.Warning);
+            else
+            {
+                if (requestId > -1)
+                    GetSimVar(requestId, (SimConnectUpdateFrequency)Enum.Parse(typeof(SimConnectUpdateFrequency), frequencyInMs.ToString()));
+            }
             WriteLog("End GetSimVar(SimConnectVariable, int)");
-            return -1;
+            return requestId;
         }
 
         /// <summary>
@@ -610,14 +627,14 @@ namespace SimConnectHelper
                     {
                         var submittedRequest = Requests.First(x => x.Value.Name == request.Name && x.Value.Unit == request.Unit);
                         var requestId = submittedRequest.Key;
-                        //simConnect.ClearDataDefinition((SIMVARDEFINITION)requestId);
-                        simConnect.ClearClientDataDefinition((SIMVARDEFINITION)requestId);
-                        Requests.Remove(requestId);
-                        if( timerStates.Any(x => x.RequestID == requestId))
+                        if (requestId > -1)
                         {
+                            //simConnect.ClearDataDefinition((SIMVARDEFINITION)requestId);
+                            simConnect.ClearClientDataDefinition((SIMVARDEFINITION)requestId);
+                            Requests.Remove(requestId);
                             RemoveTimer(requestId);
+                            result = true;
                         }
-                        result = true;
                     }
                     catch (Exception ex)
                     {
@@ -629,20 +646,35 @@ namespace SimConnectHelper
             return result;
         }
 
+        private static void AddTimer(int requestID, int frequency)
+        {
+            var timer = new System.Threading.Timer(GetSimVar, new SimVarTimer { RequestID = requestID, Request = Requests[requestID], FrequencyInMs = (int)frequency }, (int)frequency, (int)frequency);
+            timers.Add(timer);
+            var timerID = timers.IndexOf(timer);
+            timerStates.Add(new SimVarTimer { FrequencyInMs = frequency, RequestID = requestID, Request = Requests[requestID], TimerID = timerID });
+        }
+
         private static void RemoveTimer(int requestId)
         {
             WriteLog("Start RemoveTimer(int)");
-            var timerId = timerStates.FirstOrDefault(x => x.RequestID == requestId)?.TimerID;
-            if (timerId != null)
-                lock (timers)
-                {
-                    timers[(int)timerId].Dispose();
-                    lock (timerStates)
-                        foreach (var timerState in timerStates.Where(x => x.TimerID > (int)timerId))
-                        {
-                            timerState.TimerID = timerState.TimerID--;
-                        }
-                }
+            try
+            {
+                var timerId = timerStates.FirstOrDefault(x => x.RequestID == requestId)?.TimerID;
+                if (timerId != null)
+                    lock (timers)
+                    {
+                        timers[(int)timerId].Dispose();
+                        lock (timerStates)
+                            foreach (var timerState in timerStates.Where(x => x.TimerID > (int)timerId))
+                            {
+                                timerState.TimerID = timerState.TimerID--;
+                            }
+                    }
+            }
+            catch (Exception ex)
+            {
+                WriteLog(string.Format("RemoveTimer Error: {0}", ex.Message), EventLogEntryType.Error);
+            }
             WriteLog("End RemoveTimer(int)");
         }
 
@@ -657,20 +689,21 @@ namespace SimConnectHelper
             try
             {
                 if (IsConnected)
-                    if (frequency == SimConnectUpdateFrequency.Never)
+                    if (frequency == SimConnectUpdateFrequency.Never || (int)frequency > (int)SIMCONNECT_PERIOD.SECOND)
+                    {
+                        if ((int)frequency > (int)SIMCONNECT_PERIOD.SECOND)
+                        {
+                            // Register SimVarRequest
+                            RegisterSimVar(Requests[requestID], SimConnectUpdateFrequency.Never);
+                            AddTimer(requestID, (int)frequency);
+                        }
                         simConnect?.RequestDataOnSimObjectType((SIMVARREQUEST)requestID, (SIMVARDEFINITION)requestID, 0, SIMCONNECT_SIMOBJECT_TYPE.USER);
+                    }
                     else
                     {
-                        if ((int)frequency <= (int)SIMCONNECT_PERIOD.VISUAL_FRAME)
-                        {
-                            SIMCONNECT_PERIOD period = Enum.Parse<SIMCONNECT_PERIOD>(frequency.ToString().ToUpper());
-                            simConnect?.RequestDataOnSimObject((SIMVARREQUEST)requestID, (SIMVARDEFINITION)requestID, 0, period, SIMCONNECT_DATA_REQUEST_FLAG.DEFAULT, 0, 0, 0);
-                        }
-                        else
-                        {
-                            // Not a pre-defined interval - use a timer
-                            var tmr = new System.Threading.Timer(GetSimVar, new SimVarTimer { RequestID = requestID, Request = Requests[requestID], FrequencyInMs = (int)frequency }, (int)frequency, (int)frequency);
-                        }
+                        SIMCONNECT_PERIOD period = Enum.Parse<SIMCONNECT_PERIOD>(frequency.ToString().ToUpper());
+                        RegisterSimVar(Requests[requestID], SimConnectUpdateFrequency.Never);
+                        simConnect?.RequestDataOnSimObject((SIMVARREQUEST)requestID, (SIMVARDEFINITION)requestID, 0, period, SIMCONNECT_DATA_REQUEST_FLAG.DEFAULT, 0, 0, 0);
                     }
             }
             catch (Exception ex)
@@ -686,7 +719,8 @@ namespace SimConnectHelper
             try
             {
                 var requestID = ((SimVarTimer)state).RequestID;
-                simConnect?.RequestDataOnSimObjectType((SIMVARREQUEST)requestID, (SIMVARDEFINITION)requestID, 0, SIMCONNECT_SIMOBJECT_TYPE.USER);
+                GetSimVar(requestID, SimConnectUpdateFrequency.Never);
+                //simConnect?.RequestDataOnSimObjectType((SIMVARREQUEST)requestID, (SIMVARDEFINITION)requestID, 0, SIMCONNECT_SIMOBJECT_TYPE.USER);
             }
             catch(Exception ex)
             {
@@ -709,7 +743,7 @@ namespace SimConnectHelper
             }
             else
             {
-                GetSimVar(request, SimConnectUpdateFrequency.Never);
+                RegisterSimVar(request, SimConnectUpdateFrequency.Never);
             }
             WriteLog("End GetSimVar(SimConnectVariable)");
         }

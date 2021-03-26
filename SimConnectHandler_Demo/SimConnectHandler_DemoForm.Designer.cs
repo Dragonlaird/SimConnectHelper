@@ -53,8 +53,6 @@ namespace SimConnectHandler_DemoForm
             this.cmbVariable = new System.Windows.Forms.ComboBox();
             this.lblVariable = new System.Windows.Forms.Label();
             this.dgVariables = new System.Windows.Forms.DataGridView();
-            this.txtErrors = new System.Windows.Forms.TextBox();
-            this.toolTip = new System.Windows.Forms.ToolTip(this.components);
             this.ReqID = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.SimVarName = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.SimVarUnit = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -63,6 +61,8 @@ namespace SimConnectHandler_DemoForm
             this.VarIsReadOnly = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             this.SimVarUpdate = new System.Windows.Forms.DataGridViewButtonColumn();
             this.SimVarDelete = new System.Windows.Forms.DataGridViewButtonColumn();
+            this.txtErrors = new System.Windows.Forms.TextBox();
+            this.toolTip = new System.Windows.Forms.ToolTip(this.components);
             ((System.ComponentModel.ISupportInitialize)(this.txtSimConnectPort)).BeginInit();
             this.gpConnect.SuspendLayout();
             this.gpRequest.SuspendLayout();
@@ -210,6 +210,7 @@ namespace SimConnectHandler_DemoForm
             // 
             // cmbFrequency
             // 
+            this.cmbFrequency.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cmbFrequency.FormattingEnabled = true;
             this.cmbFrequency.Location = new System.Drawing.Point(65, 115);
             this.cmbFrequency.Name = "cmbFrequency";
@@ -344,18 +345,6 @@ namespace SimConnectHandler_DemoForm
             this.dgVariables.TabIndex = 8;
             this.dgVariables.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvButton_Click);
             // 
-            // txtErrors
-            // 
-            this.txtErrors.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
-            this.txtErrors.ForeColor = System.Drawing.Color.Red;
-            this.txtErrors.Location = new System.Drawing.Point(12, 320);
-            this.txtErrors.Multiline = true;
-            this.txtErrors.Name = "txtErrors";
-            this.txtErrors.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-            this.txtErrors.Size = new System.Drawing.Size(403, 178);
-            this.txtErrors.TabIndex = 9;
-            this.txtErrors.WordWrap = false;
-            // 
             // ReqID
             // 
             this.ReqID.HeaderText = "ReqID";
@@ -418,6 +407,18 @@ namespace SimConnectHandler_DemoForm
             this.SimVarDelete.ToolTipText = "Delete";
             this.SimVarDelete.UseColumnTextForButtonValue = true;
             this.SimVarDelete.Width = 50;
+            // 
+            // txtErrors
+            // 
+            this.txtErrors.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
+            this.txtErrors.ForeColor = System.Drawing.Color.Red;
+            this.txtErrors.Location = new System.Drawing.Point(12, 320);
+            this.txtErrors.Multiline = true;
+            this.txtErrors.Name = "txtErrors";
+            this.txtErrors.ScrollBars = System.Windows.Forms.ScrollBars.Both;
+            this.txtErrors.Size = new System.Drawing.Size(403, 178);
+            this.txtErrors.TabIndex = 9;
+            this.txtErrors.WordWrap = false;
             // 
             // SimConnectHandler_DemoForm
             // 
