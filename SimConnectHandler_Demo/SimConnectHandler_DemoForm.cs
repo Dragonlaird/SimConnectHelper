@@ -44,8 +44,21 @@ namespace SimConnectHandler_DemoForm
             cmbFrequency.DataSource = cmbDataSource;
         }
 
+        private void SetInvocations()
+        {
+            if (SimConnectHandler.SimConnected == null || SimConnectHandler.SimConnected.GetInvocationList().Length == 0)
+                SimConnectHandler.SimConnected += SimConnected;
+            if (SimConnectHandler.SimError == null || SimConnectHandler.SimError.GetInvocationList().Length == 0)
+                SimConnectHandler.SimError += SimError;
+            if (SimConnectHandler.SimData == null || SimConnectHandler.SimData.GetInvocationList().Length == 0)
+                SimConnectHandler.SimData += SimData;
+            if (SimConnectHandler.SimLog == null || SimConnectHandler.SimLog.GetInvocationList().Length == 0)
+                SimConnectHandler.SimLog += SimLog;
+        }
+
         private void pbConnect_Click(object sender, EventArgs e)
         {
+            SetInvocations();
             if (!SimConnectHandler.IsConnected)
             {
                 var server = txtSimConnectServer.Text;
@@ -53,10 +66,6 @@ namespace SimConnectHandler_DemoForm
                 IPAddress ipAddr = Dns.GetHostAddresses(server).FirstOrDefault(x => x.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork);
                 EndPoint ep = new IPEndPoint(ipAddr, port);
                 SimConnectHandler.Connect(ep);
-                SimConnectHandler.SimConnected += SimConnected;
-                SimConnectHandler.SimError += SimError;
-                SimConnectHandler.SimData += SimData;
-                SimConnectHandler.SimLog += SimLog;
             }
             else
             {
