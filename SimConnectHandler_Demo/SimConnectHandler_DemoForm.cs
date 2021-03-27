@@ -33,11 +33,32 @@ namespace SimConnectHandler_DemoForm
             cmbVariable.ValueMember = "Key";
             dgVariables.Rows.Clear();
             cbReadOnly.Checked = simVarVariable.OrderBy(x => x.Key).First().Value.ReadOnly;
-            txtErrors.ReadOnly = false;
+            txtErrors.ReadOnly = true;
+            cmbFrequency.DataSource = null;
+            var cmbDataSource = new List<string>();
+            foreach(var freq in Enum.GetValues(typeof(SimConnectUpdateFrequency)).Cast<SimConnectUpdateFrequency>())
+            {
+                cmbDataSource.Add(freq.ToString());
+            }
+            cmbDataSource.Add("Milliseconds");
+            cmbFrequency.DataSource = cmbDataSource;
+        }
+
+        private void SetInvocations()
+        {
+            if (SimConnectHandler.SimConnected == null || SimConnectHandler.SimConnected.GetInvocationList().Length == 0)
+                SimConnectHandler.SimConnected += SimConnected;
+            if (SimConnectHandler.SimError == null || SimConnectHandler.SimError.GetInvocationList().Length == 0)
+                SimConnectHandler.SimError += SimError;
+            if (SimConnectHandler.SimData == null || SimConnectHandler.SimData.GetInvocationList().Length == 0)
+                SimConnectHandler.SimData += SimData;
+            if (SimConnectHandler.SimLog == null || SimConnectHandler.SimLog.GetInvocationList().Length == 0)
+                SimConnectHandler.SimLog += SimLog;
         }
 
         private void pbConnect_Click(object sender, EventArgs e)
         {
+            SetInvocations();
             if (!SimConnectHandler.IsConnected)
             {
                 var server = txtSimConnectServer.Text;
@@ -45,10 +66,6 @@ namespace SimConnectHandler_DemoForm
                 IPAddress ipAddr = Dns.GetHostAddresses(server).FirstOrDefault(x => x.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork);
                 EndPoint ep = new IPEndPoint(ipAddr, port);
                 SimConnectHandler.Connect(ep);
-                SimConnectHandler.SimConnected += SimConnected;
-                SimConnectHandler.SimError += SimError;
-                SimConnectHandler.SimData += SimData;
-                SimConnectHandler.SimLog += SimLog;
             }
             else
             {
@@ -83,10 +100,11 @@ namespace SimConnectHandler_DemoForm
         {
             var errorId = Convert.ToInt32(e.Data["dwID"]);
             var sendId = Convert.ToInt32(e.Data["dwSendID"]);
-            var indexId = Convert.ToInt32(e.Data["dwIndex"]);
+            var indexId = Convert.ToDouble(e.Data["dwIndex"]);
             var exceptionId = Convert.ToInt32(e.Data["dwException"]);
             var exceptionType = (string)e.Data["exceptionType"];
-            UpdateErrorText(txtErrors, string.Format("\r\n{0:HH:mm:ss} ({1}) {2}", DateTime.Now, exceptionType, e.Message));
+            var errorMessage = string.Format("\terrorId: {0}\r\n\tsendId: {1}\r\n\tindexId: {2}\r\n\texceptionId: {3}\r\n\texceptionType: {4}", errorId, sendId, indexId, exceptionId, exceptionType);
+            UpdateErrorText(txtErrors, string.Format("\r\n{0:HH:mm:ss} ({1}) {2}\r\nData:\r\n{3}", DateTime.Now, exceptionType, e.Message, errorMessage));
             //throw e;
         }
 
@@ -185,17 +203,22 @@ namespace SimConnectHandler_DemoForm
                 //var isReadOnly = simVarDefinition.ReadOnly;
                 //if (!simVarDefinition.ReadOnly)
                 value = txtSimVarValue.Text;
+                var frequency = cmbFrequency.SelectedItem;
+                if (frequency.ToString() == "Milliseconds")
+                    frequency = (int)txtMilliseconds.Value;
                 int rowIdx = dgVariables.Rows.Add(new object[]
                 {
                     0, // RecID
                     simVarName, // SimVar
                     simVarDefinition.DefaultUnit, // Units
+                    frequency.ToString(), // Frequency
                     value, // Value
                     simVarDefinition.ReadOnly // ReadOnly
                 });
                 dgVariables.Rows[rowIdx].Cells["ReqID"].ReadOnly = true;
                 dgVariables.Rows[rowIdx].Cells["SimVarName"].ReadOnly = true;
                 dgVariables.Rows[rowIdx].Cells["SimVarUnit"].ReadOnly = true;
+                dgVariables.Rows[rowIdx].Cells["SimVarFreq"].ReadOnly = true;
                 dgVariables.Rows[rowIdx].Cells["VarIsReadOnly"].ReadOnly = true;
                 dgVariables.Rows[rowIdx].Cells["SimVarValue"].ReadOnly = false;
                 //ReqID
@@ -211,7 +234,7 @@ namespace SimConnectHandler_DemoForm
                 if (string.IsNullOrEmpty(value))
                 {
                     // Send Request - then update ReqID cell with returned request ID
-                    reqId = SendRequest(variableRequest, true);
+                    reqId = SendRequest(variableRequest, (int)Enum.Parse(typeof(SimConnectUpdateFrequency),frequency.ToString()));
                 }
                 else
                 {
@@ -241,13 +264,14 @@ namespace SimConnectHandler_DemoForm
                         == ((DataGridViewCheckBoxCell)dgVariables.Rows[e.RowIndex].Cells["VarIsReadOnly"]).TrueValue;
                     var simVarName = (string)dgVariables.Rows[e.RowIndex].Cells["SimVarName"].Value;
                     var simVarUnit = (string)dgVariables.Rows[e.RowIndex].Cells["SimVarUnit"].Value;
+                    var frequency = dgVariables.Rows[e.RowIndex].Cells["SimVarFreq"].Value;
                     SimConnectVariable request = new SimConnectVariable
                     {
                         Name = simVarName,
                         Unit = simVarUnit
                     };
                     if (isReadOnly)
-                        dgVariables.Rows[e.RowIndex].Cells["ReqID"].Value = SendRequest(request, true);
+                        dgVariables.Rows[e.RowIndex].Cells["ReqID"].Value = SendRequest(request, int.Parse(frequency.ToString()));
                     else
                     {
                         var value = dgVariables.Rows[e.RowIndex].Cells["SimVarValue"].Value;
@@ -268,6 +292,7 @@ namespace SimConnectHandler_DemoForm
                     Name = simVarName,
                     Unit = simVarUnit
                 };
+                SimConnectHandler.CancelRequest(request);
                 dgVariables.Rows.RemoveAt(e.RowIndex);
             }
         }
@@ -277,14 +302,22 @@ namespace SimConnectHandler_DemoForm
             return SimConnectHandler.SetSimVar(variableValue);
         }
 
-        private int SendRequest(SimConnectVariable request, bool FetchLatestValue = false)
+        private int SendRequest(SimConnectVariable request, int frequency)
         {
-            return SimConnectHandler.GetSimVar(request, FetchLatestValue ? SimConnectHandler.DefaultUpdateFrequency : SimConnectUpdateFrequency.Never); // If FetchLatestValue = true; Auto-update
+            return SimConnectHandler.GetSimVar(request, frequency); // If FetchLatestValue = true; Auto-update
         }
 
         private void FormClose_Click(object sender, FormClosingEventArgs e)
         {
             SimConnectHandler.Disconnect();
+        }
+
+        private void Frequency_Changed(object sender, EventArgs e)
+        {
+            if (cmbFrequency.SelectedItem.ToString() == "Milliseconds")
+                txtMilliseconds.Enabled = true;
+            else
+                txtMilliseconds.Enabled = false;
         }
     }
 }

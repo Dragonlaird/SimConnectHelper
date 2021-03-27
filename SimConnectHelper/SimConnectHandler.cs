@@ -31,6 +31,8 @@ namespace SimConnectHelper
         private static SimConnect simConnect = null;
         private const int WM_USER_SIMCONNECT = 0x0402;
         private static int RequestID = 0;
+        private static List<System.Threading.Timer> timers = new List<System.Threading.Timer>();
+        private static List<SimVarTimer> timerStates = new List<SimVarTimer>();
         public static Dictionary<int, SimConnectVariable> Requests { get; private set; } = new Dictionary<int, SimConnectVariable>();
         /// <summary>
         /// Allow connections to older MSFS applications (untested)
@@ -75,7 +77,7 @@ namespace SimConnectHelper
         /// </summary>
         public static void Connect()
         {
-            WriteLog("Start Connect();");
+            WriteLog("Start Connect()");
             foreach(var config in GetLocalFSConnections())
             {
                 Connect(config);
@@ -85,7 +87,7 @@ namespace SimConnectHelper
                 if (IsConnected)
                     break;
             }
-            WriteLog("End Connect();");
+            WriteLog("End Connect()");
         }
 
         /// <summary>
@@ -95,16 +97,16 @@ namespace SimConnectHelper
         /// <param name="ep">MSFS 2020 SimConnect Server IP & Port, NULL forces the re-use of a previously saved Config</param>
         public static void Connect(EndPoint ep)
         {
-            WriteLog("Start Connect(EndPoint);");
+            WriteLog("Start Connect(EndPoint)");
             if (ep != null)
                 endPoint = ep;
             Connect((SimConnectConfig)null);
-            WriteLog("End Connect(EndPoint);");
+            WriteLog("End Connect(EndPoint)");
         }
 
         public static void Connect(SimConnectConfig config)
         {
-            WriteLog("Start Connect(SimConnectConfig);");
+            WriteLog("Start Connect(SimConnectConfig)");
             if (source != null)
                 Disconnect();
             Connection = config;
@@ -116,7 +118,7 @@ namespace SimConnectHelper
             messagePump.Start();
             messagePumpRunning = new AutoResetEvent(false);
             messagePumpRunning.WaitOne();
-            WriteLog("End Connect(SimConnectConfig);");
+            WriteLog("End Connect(SimConnectConfig)");
         }
 
         /// <summary>
@@ -124,18 +126,18 @@ namespace SimConnectHelper
         /// </summary>
         public static void Disconnect()
         {
-            WriteLog("Start Disconnect();");
+            WriteLog("Start Disconnect()");
             StopMessagePump();
             // Raise event to notify client we've disconnected
             SimConnect_OnRecvQuit(simConnect, null);
             simConnect?.Dispose(); // May have already been disposed or not even been created, e.g. Disconnect called before Connect
             simConnect = null;
-            WriteLog("End Disconnect();");
+            WriteLog("End Disconnect()");
         }
 
         private static void StopMessagePump()
         {
-            WriteLog("Start StopMessagePump();");
+            WriteLog("Start StopMessagePump()");
             if (source != null && token.CanBeCanceled)
             {
                 source.Cancel();
@@ -149,7 +151,7 @@ namespace SimConnectHelper
                 messagePumpRunning.Dispose();
             }
             messagePump = null;
-            WriteLog("End StopMessagePump();");
+            WriteLog("End StopMessagePump()");
         }
 
         /// <summary>
@@ -158,7 +160,7 @@ namespace SimConnectHelper
         /// 
         private static bool DeleteConfigFile()
         {
-            WriteLog("Start DeleteConfigFile();");
+            WriteLog("Start DeleteConfigFile()");
             var filePath = GetConfigFilePath();// Path.Combine(Environment.CurrentDirectory, "SimConnect.cfg");
             if (File.Exists(filePath))
                 try
@@ -167,16 +169,16 @@ namespace SimConnectHelper
                 }
                 catch (Exception ex)
                 {
-                    WriteLog(string.Format("File Delete Error: {0}\r\nEnd DeleteConfigFile();", ex.Message), EventLogEntryType.Error);
+                    WriteLog(string.Format("File Delete Error: {0}\r\nEnd DeleteConfigFile()", ex.Message), EventLogEntryType.Error);
                     return false;
                 }
-            WriteLog("End DeleteConfigFile();");
+            WriteLog("End DeleteConfigFile()");
             return true;
         }
 
         private static void CreateConfigFile(SimConnectConfig config = null)
         {
-            WriteLog("Start CreateConfigFile(SimConnectConfig);");
+            WriteLog("Start CreateConfigFile(SimConnectConfig)");
             if (config == null)
                 config = new SimConnectConfig
                 {
@@ -186,7 +188,7 @@ namespace SimConnectHelper
                 };
             var filePath = GetConfigFilePath();
             File.WriteAllText(filePath, config.ConfigFileText);
-            WriteLog("End CreateConfigFile(SimConnectConfig);");
+            WriteLog("End CreateConfigFile(SimConnectConfig)");
         }
 
         /// <summary>
@@ -194,7 +196,7 @@ namespace SimConnectHelper
         /// </summary>
         private static void RunMessagePump()
         {
-            WriteLog("Start RunMessagePump();");
+            WriteLog("Start RunMessagePump()");
             // Create control to handle windows messages
             if (!IsConnected)
             {
@@ -203,7 +205,7 @@ namespace SimConnectHelper
                 ConnectFS(handler);
             }
             messagePumpRunning.Set();
-            WriteLog("End RunMessagePump();");
+            WriteLog("End RunMessagePump()");
             Application.Run();
         }
 
@@ -213,7 +215,7 @@ namespace SimConnectHelper
         /// <param name="messageHandler">Windows Message Handler</param>
         private static void ConnectFS(MessageHandler messageHandler)
         {
-            WriteLog("Start ConnectFS(MessageHandler);");
+            WriteLog("Start ConnectFS(MessageHandler)");
             // SimConnect must be linked in the same thread as the Application.Run()
             try
             {
@@ -241,12 +243,12 @@ namespace SimConnectHelper
                 // Is MSFS is not running, a COM Exception is raised. We ignore it!
                 WriteLog(string.Format("Connect Error: {0}", ex.Message), EventLogEntryType.Error);
             }
-            WriteLog("End ConnectFS(MessageHandler);");
+            WriteLog("End ConnectFS(MessageHandler)");
         }
 
         private static void SimConnect_OnRecvSimobjectData(SimConnect sender, SIMCONNECT_RECV_SIMOBJECT_DATA data)
         {
-            //WriteLog("Start SimConnect_OnRecvSimobjectData(SimConnect, SIMCONNECT_RECV_SIMOBJECT_DATA);");
+            //WriteLog("Start SimConnect_OnRecvSimobjectData(SimConnect, SIMCONNECT_RECV_SIMOBJECT_DATA)");
             if (simConnect != null) {
                 var newData = new SIMCONNECT_RECV_SIMOBJECT_DATA_BYTYPE
                 {
@@ -264,7 +266,7 @@ namespace SimConnectHelper
                 };
                 SimConnect_OnRecvSimobjectDataByType(sender, newData);
             }
-            //WriteLog("End SimConnect_OnRecvSimobjectData(SimConnect, SIMCONNECT_RECV_SIMOBJECT_DATA);");
+            //WriteLog("End SimConnect_OnRecvSimobjectData(SimConnect, SIMCONNECT_RECV_SIMOBJECT_DATA)");
         }
 
         /// <summary>
@@ -274,25 +276,30 @@ namespace SimConnectHelper
         /// <param name="data">Object Data</param>
         private static void SimConnect_OnRecvSimobjectDataByType(SimConnect sender, SIMCONNECT_RECV_SIMOBJECT_DATA_BYTYPE data)
         {
-            //WriteLog("Start SimConnect_OnRecvSimobjectDataByType(SimConnect, SIMCONNECT_RECV_SIMOBJECT_DATA_BYTYPE);");
+            //WriteLog("Start SimConnect_OnRecvSimobjectDataByType(SimConnect, SIMCONNECT_RECV_SIMOBJECT_DATA_BYTYPE)");
             if (SimData != null)
                 try
                 {
                     var value = data?.dwData;
                     if (value != null && value.Length == 1 && value[0].GetType() == typeof(SimVarString))
                         value = new object[] { ((SimVarString)value[0]).Value };
-                    var simVarVal = new SimConnectVariableValue
+                    // May receive a value for a recently deleted request, ignore it
+                    if (Requests.Any(x=> x.Key == (int)data.dwRequestID))
                     {
-                        Request = Requests[(int)data.dwRequestID],
-                        Value = value
-                    };
-                    new Task(new Action(() => SimData.DynamicInvoke(simConnect, simVarVal))).Start();
+                        var request = Requests.First(x => x.Key == (int)data.dwRequestID).Value;
+                        var simVarVal = new SimConnectVariableValue
+                        {
+                            Request = request,
+                            Value = value
+                        };
+                        new Task(new Action(() => SimData.DynamicInvoke(simConnect, simVarVal))).Start();
+                    }
                 }
                 catch(Exception ex)
                 {
                     WriteLog(string.Format("SimConnect_OnRecvSimobjectDataByType Error: {0}", ex.Message), EventLogEntryType.Error);
                 }
-            //WriteLog("End SimConnect_OnRecvSimobjectDataByType(SimConnect, SIMCONNECT_RECV_SIMOBJECT_DATA_BYTYPE);");
+            //WriteLog("End SimConnect_OnRecvSimobjectDataByType(SimConnect, SIMCONNECT_RECV_SIMOBJECT_DATA_BYTYPE)");
         }
 
         /// <summary>
@@ -302,7 +309,7 @@ namespace SimConnectHelper
         /// <param name="data">Error details</param>
         private static void SimConnect_OnRecvException(SimConnect sender, SIMCONNECT_RECV_EXCEPTION data)
         {
-            WriteLog("Start SimConnect_OnRecvException(SimConnect, SIMCONNECT_RECV_EXCEPTION);");
+            WriteLog("Start SimConnect_OnRecvException(SimConnect, SIMCONNECT_RECV_EXCEPTION)");
             if (SimError != null)
                 try
                 {
@@ -438,7 +445,7 @@ namespace SimConnectHelper
                 {
                     WriteLog(string.Format("Message Receive Error: {0}", ex.Message), EventLogEntryType.Error);
                 }
-            WriteLog("End SimConnect_OnRecvException(SimConnect, SIMCONNECT_RECV_EXCEPTION);");
+            WriteLog("End SimConnect_OnRecvException(SimConnect, SIMCONNECT_RECV_EXCEPTION)");
         }
 
         /// <summary>
@@ -448,7 +455,7 @@ namespace SimConnectHelper
         /// <param name="data">Connection info</param>
         private static void SimConnect_OnRecvOpen(SimConnect sender, SIMCONNECT_RECV_OPEN data)
         {
-            WriteLog("Start SimConnect_OnRecvOpen(SimConnect, SIMCONNECT_RECV_OPEN);");
+            WriteLog("Start SimConnect_OnRecvOpen(SimConnect, SIMCONNECT_RECV_OPEN)");
             IsConnected = true;
             if (SimConnected != null)
                 try
@@ -459,7 +466,7 @@ namespace SimConnectHelper
                 {
                     WriteLog(string.Format("Message Receive Error: {0}", ex.Message), EventLogEntryType.Error);
                 }
-            WriteLog("End SimConnect_OnRecvOpen(SimConnect, SIMCONNECT_RECV_OPEN);");
+            WriteLog("End SimConnect_OnRecvOpen(SimConnect, SIMCONNECT_RECV_OPEN)");
         }
 
         /// <summary>
@@ -469,7 +476,7 @@ namespace SimConnectHelper
         /// <param name="data">connection data</param>
         private static void SimConnect_OnRecvQuit(SimConnect sender, SIMCONNECT_RECV data)
         {
-            WriteLog("Start SimConnect_OnRecvQuit(SimConnect, SIMCONNECT_RECV);");
+            WriteLog("Start SimConnect_OnRecvQuit(SimConnect, SIMCONNECT_RECV)");
             IsConnected = false;
             if (SimConnected != null)
                 try
@@ -480,7 +487,7 @@ namespace SimConnectHelper
                 {
                     WriteLog(string.Format("Message Receive Error: {0}", ex.Message), EventLogEntryType.Error);
                 }
-            WriteLog("End SimConnect_OnRecvQuit(SimConnect, SIMCONNECT_RECV);");
+            WriteLog("End SimConnect_OnRecvQuit(SimConnect, SIMCONNECT_RECV)");
         }
 
         /// <summary>
@@ -489,44 +496,18 @@ namespace SimConnectHelper
         /// <param name="request">SimVar to fetch from SimConnect</param>
         /// <param name="frequency">How frequently should SimConnect provide an updated value?</param>
         /// <returns>A unique ID for the submitted request. Use this to request the next value via FetchValueUpdate</returns>
-        public static int GetSimVar(SimConnectVariable request, SimConnectUpdateFrequency frequency = SimConnectUpdateFrequency.Never)
+        public static int RegisterSimVar(SimConnectVariable request, SimConnectUpdateFrequency frequency = SimConnectUpdateFrequency.Never)
         {
-            WriteLog("Start GetSimVar(SimConnectVariable, SimConnectUpdateFrequency);");
+            WriteLog("Start GetSimVar(SimConnectVariable, SimConnectUpdateFrequency)");
             if (IsConnected)
             {
                 var unit = request.Unit;
                 if (unit?.IndexOf("string") > -1)
                 {
-                    unit = null;
+                    unit = null; // String values don't actually have a unit
                 }
-                SimVarRequest simReq;
-                lock (Requests)
-                {
-                    if (Requests.Any(x => x.Value.Name.Equals(request.Name, StringComparison.InvariantCultureIgnoreCase)
-                        && x.Value.Unit.Equals(request.Unit, StringComparison.InvariantCultureIgnoreCase)))
-                    {
-                        // Re-use a previously requested variable for retransmission to SimConnect
-                        var reqId = GetRequestId(request);
-                        simReq = new SimVarRequest
-                        {
-                            ID = reqId,
-                            Request = request
-                        };
-                    }
-                    else
-                    {
-                        // Fetch the values suitable for transmission to SimConnect
-                        simReq = new SimVarRequest
-                        {
-                            ID = RequestID++,
-                            Request = request
-                        };
-                        // New SimVar requested - add it to our list
-                        Requests.Add((int)simReq.ReqID, simReq.Request);
-                    }
-                }
+                SimVarRequest simReq = AddRequest(request);
                 // Submit the SimVar request to SimConnect
-                // m_oSimConnect.AddToDataDefinition(_oSimvarRequest.eDef, _oSimvarRequest.sName, _oSimvarRequest.sUnits, SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
                 try
                 {
                     simConnect.AddToDataDefinition(simReq.DefID, request.Name, unit, simReq.SimType, 0.0f, SimConnect.SIMCONNECT_UNUSED);
@@ -561,17 +542,73 @@ namespace SimConnectHelper
                     if (frequency != SimConnectUpdateFrequency.Never)
                         GetSimVar(simReq.ID, DefaultUpdateFrequency); // Request value to be sent back immediately, will auto-update using pre-defined frequency
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
-                    WriteLog(string.Format("SimConnect Error: {0}\r\nEnd GetSimVar(SimConnectVariable, SimConnectUpdateFrequency);", ex.Message), EventLogEntryType.Error);
+                    WriteLog(string.Format("SimConnect Error: {0}\r\nEnd GetSimVar(SimConnectVariable, SimConnectUpdateFrequency)", ex.Message), EventLogEntryType.Error);
                     SimConnect_OnRecvException(simConnect, new SIMCONNECT_RECV_EXCEPTION { dwException = (uint)ex.HResult });
                     return -1;
                 }
-                WriteLog("End GetSimVar(SimConnectVariable, SimConnectUpdateFrequency);");
+                WriteLog("End GetSimVar(SimConnectVariable, SimConnectUpdateFrequency)");
                 return simReq.ID;
             }
-            WriteLog("SimVar Not Found\r\nEnd GetSimVar(SimConnectVariable, SimConnectUpdateFrequency);", EventLogEntryType.Warning);
+            WriteLog("SimVar Not Found\r\nEnd GetSimVar(SimConnectVariable, SimConnectUpdateFrequency)", EventLogEntryType.Warning);
             return -1;
+        }
+
+        internal static SimVarRequest AddRequest(SimConnectVariable request)
+        {
+            SimVarRequest simReq;
+            lock (Requests)
+            {
+                if (Requests.Any(x => x.Value.Name.Equals(request.Name, StringComparison.InvariantCultureIgnoreCase)
+                    && x.Value.Unit.Equals(request.Unit, StringComparison.InvariantCultureIgnoreCase)))
+                {
+                    // Re-use a previously requested variable for retransmission to SimConnect
+                    var reqId = GetRequestId(request);
+                    simReq = new SimVarRequest
+                    {
+                        ID = reqId,
+                        Request = request
+                    };
+                }
+                else
+                {
+                    // Fetch the values suitable for transmission to SimConnect
+                    simReq = new SimVarRequest
+                    {
+                        ID = RequestID++,
+                        Request = request
+                    };
+                    // New SimVar requested - add it to our list
+                    Requests.Add((int)simReq.ReqID, simReq.Request);
+                }
+            }
+            return simReq;
+        }
+
+        /// <summary>
+        /// Request a SimVar value using a custom-defined frequency
+        /// </summary>
+        /// <param name="request">SimVar to request</param>
+        /// <param name="frequencyInMs">Frequency (in ms)</param>
+        /// <returns></returns>
+        public static int GetSimVar(SimConnectVariable request, int frequencyInMs)
+        {
+            WriteLog("Start GetSimVar(SimConnectVariable, int)");
+            var simReq = AddRequest(request);
+            var requestId = (int)simReq.ReqID;
+            if (frequencyInMs > (int)SIMCONNECT_PERIOD.SECOND)
+            {
+                if (requestId > -1)
+                    GetSimVar(requestId, (SimConnectUpdateFrequency)frequencyInMs);
+            }
+            else
+            {
+                if (requestId > -1)
+                    GetSimVar(requestId, (SimConnectUpdateFrequency)Enum.Parse(typeof(SimConnectUpdateFrequency), frequencyInMs.ToString()));
+            }
+            WriteLog("End GetSimVar(SimConnectVariable, int)");
+            return requestId;
         }
 
         /// <summary>
@@ -580,7 +617,7 @@ namespace SimConnectHelper
         /// <param name="request">SimVar Request to cancel</param>
         public static bool CancelRequest(SimConnectVariable request)
         {
-            WriteLog("Start CancelRequest(SimConnectVariable);");
+            WriteLog("Start CancelRequest(SimConnectVariable)");
             var result = false;
             if (simConnect != null && IsConnected && Requests.Any(x => x.Value.Name == request.Name && x.Value.Unit == request.Unit))
             {
@@ -590,10 +627,14 @@ namespace SimConnectHelper
                     {
                         var submittedRequest = Requests.First(x => x.Value.Name == request.Name && x.Value.Unit == request.Unit);
                         var requestId = submittedRequest.Key;
-                        //simConnect.ClearDataDefinition((SIMVARDEFINITION)requestId);
-                        simConnect.ClearClientDataDefinition((SIMVARDEFINITION)requestId);
-                        Requests.Remove(requestId);
-                        result = true;
+                        if (requestId > -1)
+                        {
+                            //simConnect.ClearDataDefinition((SIMVARDEFINITION)requestId);
+                            simConnect.ClearClientDataDefinition((SIMVARDEFINITION)requestId);
+                            Requests.Remove(requestId);
+                            RemoveTimer(requestId);
+                            result = true;
+                        }
                     }
                     catch (Exception ex)
                     {
@@ -601,8 +642,40 @@ namespace SimConnectHelper
                     }
                 }
             }
-            WriteLog("End CancelRequest(SimConnectVariable);");
+            WriteLog("End CancelRequest(SimConnectVariable)");
             return result;
+        }
+
+        private static void AddTimer(int requestID, int frequency)
+        {
+            var timer = new System.Threading.Timer(GetSimVar, new SimVarTimer { RequestID = requestID, Request = Requests[requestID], FrequencyInMs = (int)frequency }, (int)frequency, (int)frequency);
+            timers.Add(timer);
+            var timerID = timers.IndexOf(timer);
+            timerStates.Add(new SimVarTimer { FrequencyInMs = frequency, RequestID = requestID, Request = Requests[requestID], TimerID = timerID });
+        }
+
+        private static void RemoveTimer(int requestId)
+        {
+            WriteLog("Start RemoveTimer(int)");
+            try
+            {
+                var timerId = timerStates.FirstOrDefault(x => x.RequestID == requestId)?.TimerID;
+                if (timerId != null)
+                    lock (timers)
+                    {
+                        timers[(int)timerId].Dispose();
+                        lock (timerStates)
+                            foreach (var timerState in timerStates.Where(x => x.TimerID > (int)timerId))
+                            {
+                                timerState.TimerID = timerState.TimerID--;
+                            }
+                    }
+            }
+            catch (Exception ex)
+            {
+                WriteLog(string.Format("RemoveTimer Error: {0}", ex.Message), EventLogEntryType.Error);
+            }
+            WriteLog("End RemoveTimer(int)");
         }
 
         /// <summary>
@@ -612,15 +685,24 @@ namespace SimConnectHelper
         /// <param name="frequency">SimVar can be requested manually (SimConnectUpdateFrequency.Never) or auto-sent at a pre-defined frequency</param>
         public static void GetSimVar(int requestID, SimConnectUpdateFrequency frequency)
         {
-            WriteLog("Start GetSimVar(int, SimConnectUpdateFrequency);");
+            WriteLog("Start GetSimVar(int, SimConnectUpdateFrequency)");
             try
             {
                 if (IsConnected)
-                    if (frequency == SimConnectUpdateFrequency.Never)
+                    if (frequency == SimConnectUpdateFrequency.Never || (int)frequency > (int)SIMCONNECT_PERIOD.SECOND)
+                    {
+                        if ((int)frequency > (int)SIMCONNECT_PERIOD.SECOND)
+                        {
+                            // Register SimVarRequest
+                            RegisterSimVar(Requests[requestID], SimConnectUpdateFrequency.Never);
+                            AddTimer(requestID, (int)frequency);
+                        }
                         simConnect?.RequestDataOnSimObjectType((SIMVARREQUEST)requestID, (SIMVARDEFINITION)requestID, 0, SIMCONNECT_SIMOBJECT_TYPE.USER);
+                    }
                     else
                     {
                         SIMCONNECT_PERIOD period = Enum.Parse<SIMCONNECT_PERIOD>(frequency.ToString().ToUpper());
+                        RegisterSimVar(Requests[requestID], SimConnectUpdateFrequency.Never);
                         simConnect?.RequestDataOnSimObject((SIMVARREQUEST)requestID, (SIMVARDEFINITION)requestID, 0, period, SIMCONNECT_DATA_REQUEST_FLAG.DEFAULT, 0, 0, 0);
                     }
             }
@@ -629,7 +711,22 @@ namespace SimConnectHelper
                 WriteLog(string.Format("Get SimVar Error: {0}", ex.Message), EventLogEntryType.Error);
                 // Likely cause, no request for this variable has previously been submitted
             }
-            WriteLog("End GetSimVar(int, SimConnectUpdateFrequency);");
+            WriteLog("End GetSimVar(int, SimConnectUpdateFrequency)");
+        }
+
+        private static void GetSimVar(object state)
+        {
+            try
+            {
+                var requestID = ((SimVarTimer)state).RequestID;
+                GetSimVar(requestID, SimConnectUpdateFrequency.Never);
+                //simConnect?.RequestDataOnSimObjectType((SIMVARREQUEST)requestID, (SIMVARDEFINITION)requestID, 0, SIMCONNECT_SIMOBJECT_TYPE.USER);
+            }
+            catch(Exception ex)
+            {
+                WriteLog(string.Format("GetSimvar(object) error: {0}", ex.Message), EventLogEntryType.Error);
+                RemoveTimer(((SimVarTimer)state).RequestID);
+            }
         }
 
         /// <summary>
@@ -638,7 +735,7 @@ namespace SimConnectHelper
         /// <param name="requestID">Variable definition requested via GetSimVar</param>
         public static void GetSimVar(SimConnectVariable request)
         {
-            WriteLog("Start GetSimVar(SimConnectVariable);");
+            WriteLog("Start GetSimVar(SimConnectVariable)");
             var reqId = GetRequestId(request);
             if (reqId > -1)
             {
@@ -646,9 +743,9 @@ namespace SimConnectHelper
             }
             else
             {
-                GetSimVar(request, SimConnectUpdateFrequency.Never);
+                RegisterSimVar(request, SimConnectUpdateFrequency.Never);
             }
-            WriteLog("End GetSimVar(SimConnectVariable);");
+            WriteLog("End GetSimVar(SimConnectVariable)");
         }
 
         /// <summary>
@@ -657,10 +754,10 @@ namespace SimConnectHelper
         /// <param name="requestId">ID returned when submitting the original SimVar request</param>
         public static void GetSimVar(int requestId)
         {
-            WriteLog("Start GetSimVar(int);");
+            WriteLog("Start GetSimVar(int)");
             if (requestId > -1)
                 GetSimVar(requestId, SimConnectUpdateFrequency.Never);
-            WriteLog("End GetSimVar(int);");
+            WriteLog("End GetSimVar(int)");
         }
 
         /// <summary>
@@ -669,7 +766,7 @@ namespace SimConnectHelper
         /// <param name="simVarValue">SimVar and associated value</param>
         public static int SetSimVar(SimConnectVariableValue simVarValue)
         {
-            WriteLog("Start SetSimVar(SimConnectVariableValue);");
+            WriteLog("Start SetSimVar(SimConnectVariableValue)");
             // As for requests, setting values is a 2-step process, reserve the data area,then modify the data it holds
             GetSimVar(simVarValue.Request);
 
@@ -680,13 +777,13 @@ namespace SimConnectHelper
                 simConnect.SetDataOnSimObject((SIMVARDEFINITION)reqId, SimConnect.SIMCONNECT_OBJECT_ID_USER, SIMCONNECT_DATA_SET_FLAG.DEFAULT, simVarValue.Value);
                 //simConnect.SetDataOnSimObject((SIMVARDEFINITION)reqId, (uint)reqId, (SIMCONNECT_DATA_SET_FLAG)SimConnect.SIMCONNECT_OBJECT_ID_USER, simVarValue.Value);
             }
-            WriteLog("End SetSimVar(SimConnectVariableValue);");
+            WriteLog("End SetSimVar(SimConnectVariableValue)");
             return reqId;
         }
 
         private static int GetRequestId(SimConnectVariable request)
         {
-            WriteLog("Start GetRequestId(SimConnectVariable);\r\nEnd GetRequestId(SimConnectVariable);");
+            WriteLog("Start GetRequestId(SimConnectVariable);\r\nEnd GetRequestId(SimConnectVariable)");
             return Requests.Any(x =>
                 x.Value.Name.Equals(request.Name, StringComparison.InvariantCultureIgnoreCase)
                 && x.Value.Unit.Equals(request.Unit, StringComparison.InvariantCultureIgnoreCase)) ?
@@ -703,7 +800,7 @@ namespace SimConnectHelper
         /// <param name="msg">Message from sender</param>
         private static void MessageReceived(object sender, Message msg)
         {
-            //WriteLog("Start MessageReceived(object, Message);");
+            //WriteLog("Start MessageReceived(object, Message)");
             if (msg.Msg == WM_USER_SIMCONNECT && simConnect != null)
                 try
                 {
@@ -715,7 +812,7 @@ namespace SimConnectHelper
                 {
                     // Seems to happen if FS is shutting down or when we disconnect
                 }
-            //WriteLog("End MessageReceived(object, Message);");
+            //WriteLog("End MessageReceived(object, Message)");
         }
 
         /// <summary>
@@ -727,7 +824,7 @@ namespace SimConnectHelper
             // Need to confirm the correct locaion for SimConnct.cfg.
             // Some documentation states it is in the AppData folder, others within the current folder, others still state the My Documents folder
             //var filePath = Path.Combine(Environment.GetEnvironmentVariable("APPDATA"), "Microsoft Flight Simulator", "SimConnect.cfg");
-            WriteLog("Start GetConfigFilePath();\r\nEnd GetConfigFilePath();");
+            WriteLog("Start GetConfigFilePath();\r\nEnd GetConfigFilePath()");
             return ConfigFilePath;
         }
 
@@ -737,7 +834,7 @@ namespace SimConnectHelper
         /// <returns>List of connection configurations</returns>
         private static List<SimConnectConfig> GetLocalFSConnections()
         {
-            WriteLog("Start GetLocalFSConnections();");
+            WriteLog("Start GetLocalFSConnections()");
             List<SimConnectConfig> configs = new List<SimConnectConfig>();
             try
             {
@@ -763,17 +860,17 @@ namespace SimConnectHelper
             {
                 WriteLog(string.Format("Unable to open XML config: {0}", ex.Message), EventLogEntryType.Error);
             }
-            WriteLog("End GetLocalFSConnections();");
+            WriteLog("End GetLocalFSConnections()");
             return configs;
         }
 
         private static SimConnectConfig GetConfigFromXml(XmlNode xmlNode)
         {
-            WriteLog("Start GetConfigFromXml(XmlNode);");
+            WriteLog("Start GetConfigFromXml(XmlNode)");
             XmlSerializer serial = new XmlSerializer(typeof(SimConnectConfig));
             using (XmlNodeReader reader = new XmlNodeReader(xmlNode))
             {
-                WriteLog("End GetConfigFromXml(XmlNode);");
+                WriteLog("End GetConfigFromXml(XmlNode)");
                 return (SimConnectConfig)serial.Deserialize(reader);
             }
         }
