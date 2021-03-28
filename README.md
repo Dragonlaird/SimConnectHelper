@@ -1,6 +1,6 @@
 # SimConnectHelper
 
-A static class to simplify communication with MSFS 2020 using SimConnect.
+A static C# class to simplify communication with MSFS 2020 using the SimConnect SDK (aka SimConnect).
 
 Allows a project to connect to MSFS 2020, via SimConnect, and submit requests for SimVars.
 
