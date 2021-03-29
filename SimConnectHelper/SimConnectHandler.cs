@@ -764,7 +764,7 @@ namespace SimConnectHelper
         /// Set the value associated with a SimVar
         /// </summary>
         /// <param name="simVarValue">SimVar and associated value</param>
-        public static int SetSimVar(SimConnectVariableValue simVarValue)
+        public static int SetSimVar(SimConnectVariableValue simVarValue, bool disableAI = false)
         {
             WriteLog("Start SetSimVar(SimConnectVariableValue)");
             // As for requests, setting values is a 2-step process, reserve the data area,then modify the data it holds
@@ -773,6 +773,13 @@ namespace SimConnectHelper
             var reqId = GetRequestId(simVarValue.Request);
             if (reqId > -1)
             {
+                // Should we disable auto-updates by the AI?
+                if (disableAI)
+                {
+                    // We shall assume all SimVar updates will be in relation to the user's aircraft
+                    // SIMCONNECT_OBJECT_ID_USER
+                    simConnect.AIReleaseControl(SimConnect.SIMCONNECT_OBJECT_ID_USER, (SIMVARDEFINITION)reqId);
+                }
                 // Data area reserved, now set the value
                 simConnect.SetDataOnSimObject((SIMVARDEFINITION)reqId, SimConnect.SIMCONNECT_OBJECT_ID_USER, SIMCONNECT_DATA_SET_FLAG.DEFAULT, simVarValue.Value);
                 //simConnect.SetDataOnSimObject((SIMVARDEFINITION)reqId, (uint)reqId, (SIMCONNECT_DATA_SET_FLAG)SimConnect.SIMCONNECT_OBJECT_ID_USER, simVarValue.Value);
