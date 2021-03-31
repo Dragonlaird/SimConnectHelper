@@ -591,7 +591,6 @@ namespace SimConnectHelper
         /// </summary>
         /// <param name="request">SimVar to request</param>
         /// <param name="frequencyInMs">Frequency (in ms)</param>
-        /// <returns></returns>
         public static int GetSimVar(SimConnectVariable request, int frequencyInMs)
         {
             WriteLog("Start GetSimVar(SimConnectVariable, int)");
@@ -720,7 +719,6 @@ namespace SimConnectHelper
             {
                 var requestID = ((SimVarTimer)state).RequestID;
                 GetSimVar(requestID, SimConnectUpdateFrequency.Never);
-                //simConnect?.RequestDataOnSimObjectType((SIMVARREQUEST)requestID, (SIMVARDEFINITION)requestID, 0, SIMCONNECT_SIMOBJECT_TYPE.USER);
             }
             catch(Exception ex)
             {
@@ -733,7 +731,8 @@ namespace SimConnectHelper
         /// Request an update for a specific SimVar request (used for GetSimVar(frequency = SIMCONNECT_PERIOD.NEVER))
         /// </summary>
         /// <param name="requestID">Variable definition requested via GetSimVar</param>
-        public static void GetSimVar(SimConnectVariable request)
+        /// <returns>Reference Id for SimVar in </returns>
+        public static int GetSimVar(SimConnectVariable request)
         {
             WriteLog("Start GetSimVar(SimConnectVariable)");
             var reqId = GetRequestId(request);
@@ -743,9 +742,10 @@ namespace SimConnectHelper
             }
             else
             {
-                RegisterSimVar(request, SimConnectUpdateFrequency.Never);
+                reqId = RegisterSimVar(request, SimConnectUpdateFrequency.Never);
             }
             WriteLog("End GetSimVar(SimConnectVariable)");
+            return reqId;
         }
 
         /// <summary>
@@ -768,9 +768,7 @@ namespace SimConnectHelper
         {
             WriteLog("Start SetSimVar(SimConnectVariableValue)");
             // As for requests, setting values is a 2-step process, reserve the data area,then modify the data it holds
-            GetSimVar(simVarValue.Request);
-
-            var reqId = GetRequestId(simVarValue.Request);
+            var reqId = GetSimVar(simVarValue.Request);
             if (reqId > -1)
             {
                 // Should we disable auto-updates by the AI?
