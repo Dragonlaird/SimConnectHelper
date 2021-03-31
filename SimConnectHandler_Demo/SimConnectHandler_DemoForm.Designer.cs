@@ -1,5 +1,4 @@
-﻿
-namespace SimConnectHandler_DemoForm
+﻿namespace SimConnectHandler_DemoForm
 {
     partial class SimConnectHandler_DemoForm
     {
