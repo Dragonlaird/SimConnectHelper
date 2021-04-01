@@ -536,7 +536,10 @@ namespace SimConnectHelper
                             simConnect.RegisterDataDefineStruct<object>(simReq.DefID); // This will likely fail as variants don't transform well
                             break;
                         default:
-                            simConnect.RegisterDataDefineStruct<double>(simReq.DefID); // We'll presume default values being requested are numeric
+                            if (string.IsNullOrEmpty(unit))
+                                simConnect.RegisterDataDefineStruct<SimVarString>(simReq.DefID);
+                            else
+                                simConnect.RegisterDataDefineStruct<double>(simReq.DefID); // We'll presume default values being requested are numeric
                             break;
                     }
                     if (frequency != SimConnectUpdateFrequency.Never)
