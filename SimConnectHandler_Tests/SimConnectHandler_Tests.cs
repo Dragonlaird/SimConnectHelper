@@ -2,10 +2,13 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using SimConnectHelper;
 using SimConnectHelper.Common;
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 
@@ -132,6 +135,44 @@ namespace SimConnectHandler_Tests
             Assert.IsNotNull(result);
         }
 
+        [TestMethod]
+        public void GetEverySimVar()
+        {
+            List<SimConnectVariable> failures = new List<SimConnectVariable>();
+            const int frequency = (int)SimConnectUpdateFrequency.Once;
+            const int resultDelayCheckMilliseconds = 5;
+            const int maxWaitForResultMilliseconds = 1000;
+            SimConnectHandler.Disconnect();
+            SimConnectHandler.SimError += SimConnect_Error;
+            SimConnectHandler.SimConnected += SimConnect_Connection;
+            SimConnectHandler.SimData += SimConnect_DataReceived;
+            SimConnectHandler.Connect();
+            foreach (var simVarDefinition in SimVarUnits.DefaultUnits)
+            {
+                SimConnectVariable request = new SimConnectVariable { Name = simVarDefinition.Value.Name, Unit = simVarDefinition.Value.DefaultUnit };
+                int requestId = SimConnectHandler.GetSimVar(request, frequency);
+                // -1 is the default value for a request that could not be sent - usually because SimConnect is not connected to MSFS 2020
+                Assert.AreNotEqual(-1, requestId);
+                // Ask SimConnect to fetch the latest value
+                result = null;
+                SimConnectHandler.GetSimVar(requestId);
+                var endWaitTime = DateTime.Now.AddMilliseconds(maxWaitForResultMilliseconds);
+                while (result == null && endWaitTime > DateTime.Now)
+                {
+                    Thread.Sleep(resultDelayCheckMilliseconds); // Wait to receive the value
+                }
+                if(result == null)
+                {
+                    failures.Add(request);
+                }
+                SimConnectHandler.CancelRequest(request);
+            }
+            SimConnectHandler.Disconnect();
+            foreach (var request in failures)
+                Debug.WriteLine(string.Format("{0} ({1})", request.Name, request.Unit));
+            Assert.AreEqual(0, failures.Count());
+        }
+
         private void SimConnect_DataReceived(object sender, SimConnectVariableValue e)
         {
             result = e;
@@ -139,12 +180,12 @@ namespace SimConnectHandler_Tests
 
         private void SimConnect_Connection(object sender, bool e)
         {
-            Assert.IsTrue(e);
+            //Assert.IsTrue(e);
         }
 
-        private void SimConnect_Error(object sender, IOException e)
+        private void SimConnect_Error(object sender, ExternalException e)
         {
-            throw new NotImplementedException();
+            //throw new NotImplementedException();
         }
 
         private EndPoint GetEndPoint()

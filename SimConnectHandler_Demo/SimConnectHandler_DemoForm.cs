@@ -91,7 +91,7 @@ namespace SimConnectHandler_DemoForm
         /// </summary>
         /// <param name="sender">SimConnect</param>
         /// <param name="e">Exception containing SimConnect error data</param>
-        private void SimError(object sender, IOException e)
+        private void SimError(object sender, ExternalException e)
         {
             var errorId = Convert.ToInt32(e.Data["dwID"]);
             var sendId = Convert.ToInt32(e.Data["dwSendID"]);

@@ -8,6 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -57,7 +58,7 @@ namespace SimConnectHelper
         /// <summary>
         /// Called whenever SimConnect receives an error from MSFS 2020
         /// </summary>
-        public static EventHandler<IOException> SimError;
+        public static EventHandler<ExternalException> SimError;
         /// <summary>
         /// Called whenever MSFS 2020 transmits requested data about an object (e.g. SimVar result)
         /// </summary>
@@ -310,10 +311,10 @@ namespace SimConnectHelper
         private static void SimConnect_OnRecvException(SimConnect sender, SIMCONNECT_RECV_EXCEPTION data)
         {
             WriteLog("Start SimConnect_OnRecvException(SimConnect, SIMCONNECT_RECV_EXCEPTION)");
-            if (SimError != null)
+            if (SimError != null && SimError.Target!= null)
                 try
                 {
-                    var ex = new IOException("SimConnect returned an Error, details in Data", null);
+                    var ex = new ExternalException("SimConnect returned an Error, details in Data", null);
                     ex.Source = "SimConnect";
                     ex.Data.Add("data", data);
                     foreach (var property in data.GetType().GetFields())
