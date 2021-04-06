@@ -20,7 +20,7 @@ namespace SimConnectHelper
     /// <summary>
     /// Static class to connect/disconnect to MSFS 2020, via SimConnect
     /// </summary>
-    public static class SimConnectHandler
+    public static class SimConnectHelper
     {
         private static MessageHandler handler = null;
         private static CancellationTokenSource source = null;
@@ -824,10 +824,11 @@ namespace SimConnectHelper
         /// <returns>SimConnect.cfg FilePath</returns>
         private static string GetConfigFilePath()
         {
+            WriteLog("Start GetConfigFilePath()");
             // Need to confirm the correct locaion for SimConnct.cfg.
             // Some documentation states it is in the AppData folder, others within the current folder, others still state the My Documents folder
             //var filePath = Path.Combine(Environment.GetEnvironmentVariable("APPDATA"), "Microsoft Flight Simulator", "SimConnect.cfg");
-            WriteLog("Start GetConfigFilePath();\r\nEnd GetConfigFilePath()");
+            WriteLog("End GetConfigFilePath()");
             return ConfigFilePath;
         }
 
