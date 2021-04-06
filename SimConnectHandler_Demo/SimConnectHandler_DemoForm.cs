@@ -46,30 +46,30 @@ namespace SimConnectHandler_DemoForm
 
         private void SetInvocations()
         {
-            if (SimConnectHandler.SimConnected == null || SimConnectHandler.SimConnected.GetInvocationList().Length == 0)
-                SimConnectHandler.SimConnected += SimConnected;
-            if (SimConnectHandler.SimError == null || SimConnectHandler.SimError.GetInvocationList().Length == 0)
-                SimConnectHandler.SimError += SimError;
-            if (SimConnectHandler.SimData == null || SimConnectHandler.SimData.GetInvocationList().Length == 0)
-                SimConnectHandler.SimData += SimData;
-            if (SimConnectHandler.SimLog == null || SimConnectHandler.SimLog.GetInvocationList().Length == 0)
-                SimConnectHandler.SimLog += SimLog;
+            if (SimConnectHelper.SimConnectHelper.SimConnected == null || SimConnectHelper.SimConnectHelper.SimConnected.GetInvocationList().Length == 0)
+                SimConnectHelper.SimConnectHelper.SimConnected += SimConnected;
+            if (SimConnectHelper.SimConnectHelper.SimError == null || SimConnectHelper.SimConnectHelper.SimError.GetInvocationList().Length == 0)
+                global::SimConnectHelper.SimConnectHelper.SimError += SimError;
+            if (SimConnectHelper.SimConnectHelper.SimData == null || SimConnectHelper.SimConnectHelper.SimData.GetInvocationList().Length == 0)
+                SimConnectHelper.SimConnectHelper.SimData += SimData;
+            if (SimConnectHelper.SimConnectHelper.SimLog == null || SimConnectHelper.SimConnectHelper.SimLog.GetInvocationList().Length == 0)
+                SimConnectHelper.SimConnectHelper.SimLog += SimLog;
         }
 
         private void pbConnect_Click(object sender, EventArgs e)
         {
             SetInvocations();
-            if (!SimConnectHandler.IsConnected)
+            if (!SimConnectHelper.SimConnectHelper.IsConnected)
             {
                 var server = txtSimConnectServer.Text;
                 var port = (int)txtSimConnectPort.Value;
                 IPAddress ipAddr = Dns.GetHostAddresses(server).FirstOrDefault(x => x.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork);
                 EndPoint ep = new IPEndPoint(ipAddr, port);
-                SimConnectHandler.Connect(ep);
+                SimConnectHelper.SimConnectHelper.Connect(ep);
             }
             else
             {
-                SimConnectHandler.Disconnect();
+                SimConnectHelper.SimConnectHelper.Disconnect();
             }
         }
 
@@ -159,7 +159,7 @@ namespace SimConnectHandler_DemoForm
                     Name = simVarName,
                     Unit = simVarUnit
                 };
-                SimConnectHandler.GetSimVar(request);
+                SimConnectHelper.SimConnectHelper.GetSimVar(request);
             }
         }
 
@@ -257,7 +257,7 @@ namespace SimConnectHandler_DemoForm
             {
                 // User wants to refresh the displayed value
                 if (reqId > -1)
-                    SimConnectHandler.GetSimVar((int)reqId);
+                    SimConnectHelper.SimConnectHelper.GetSimVar((int)reqId);
                 else
                 {
                     var isReadOnly = ((DataGridViewCheckBoxCell)dgVariables.Rows[e.RowIndex].Cells["VarIsReadOnly"]).Value
@@ -292,24 +292,24 @@ namespace SimConnectHandler_DemoForm
                     Name = simVarName,
                     Unit = simVarUnit
                 };
-                SimConnectHandler.CancelRequest(request);
+                SimConnectHelper.SimConnectHelper.CancelRequest(request);
                 dgVariables.Rows.RemoveAt(e.RowIndex);
             }
         }
 
         private int SendValue(SimConnectVariableValue variableValue)
         {
-            return SimConnectHandler.SetSimVar(variableValue);
+            return SimConnectHelper.SimConnectHelper.SetSimVar(variableValue, disableAI);
         }
 
         private int SendRequest(SimConnectVariable request, int frequency)
         {
-            return SimConnectHandler.GetSimVar(request, frequency); // If FetchLatestValue = true; Auto-update
+            return SimConnectHelper.SimConnectHelper.GetSimVar(request, frequency); // If FetchLatestValue = true; Auto-update
         }
 
         private void FormClose_Click(object sender, FormClosingEventArgs e)
         {
-            SimConnectHandler.Disconnect();
+            SimConnectHelper.SimConnectHelper.Disconnect();
         }
 
         private void Frequency_Changed(object sender, EventArgs e)
