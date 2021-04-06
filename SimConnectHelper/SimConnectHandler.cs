@@ -8,6 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -57,7 +58,7 @@ namespace SimConnectHelper
         /// <summary>
         /// Called whenever SimConnect receives an error from MSFS 2020
         /// </summary>
-        public static EventHandler<IOException> SimError;
+        public static EventHandler<ExternalException> SimError;
         /// <summary>
         /// Called whenever MSFS 2020 transmits requested data about an object (e.g. SimVar result)
         /// </summary>
@@ -310,10 +311,10 @@ namespace SimConnectHelper
         private static void SimConnect_OnRecvException(SimConnect sender, SIMCONNECT_RECV_EXCEPTION data)
         {
             WriteLog("Start SimConnect_OnRecvException(SimConnect, SIMCONNECT_RECV_EXCEPTION)");
-            if (SimError != null)
+            if (SimError != null && SimError.Target!= null)
                 try
                 {
-                    var ex = new IOException("SimConnect returned an Error, details in Data", null);
+                    var ex = new ExternalException("SimConnect returned an Error, details in Data", null);
                     ex.Source = "SimConnect";
                     ex.Data.Add("data", data);
                     foreach (var property in data.GetType().GetFields())
@@ -594,7 +595,6 @@ namespace SimConnectHelper
         /// </summary>
         /// <param name="request">SimVar to request</param>
         /// <param name="frequencyInMs">Frequency (in ms)</param>
-        /// <returns></returns>
         public static int GetSimVar(SimConnectVariable request, int frequencyInMs)
         {
             WriteLog("Start GetSimVar(SimConnectVariable, int)");
@@ -723,7 +723,6 @@ namespace SimConnectHelper
             {
                 var requestID = ((SimVarTimer)state).RequestID;
                 GetSimVar(requestID, SimConnectUpdateFrequency.Never);
-                //simConnect?.RequestDataOnSimObjectType((SIMVARREQUEST)requestID, (SIMVARDEFINITION)requestID, 0, SIMCONNECT_SIMOBJECT_TYPE.USER);
             }
             catch(Exception ex)
             {
@@ -736,7 +735,8 @@ namespace SimConnectHelper
         /// Request an update for a specific SimVar request (used for GetSimVar(frequency = SIMCONNECT_PERIOD.NEVER))
         /// </summary>
         /// <param name="requestID">Variable definition requested via GetSimVar</param>
-        public static void GetSimVar(SimConnectVariable request)
+        /// <returns>Reference Id for SimVar in </returns>
+        public static int GetSimVar(SimConnectVariable request)
         {
             WriteLog("Start GetSimVar(SimConnectVariable)");
             var reqId = GetRequestId(request);
@@ -746,9 +746,10 @@ namespace SimConnectHelper
             }
             else
             {
-                RegisterSimVar(request, SimConnectUpdateFrequency.Never);
+                reqId = RegisterSimVar(request, SimConnectUpdateFrequency.Never);
             }
             WriteLog("End GetSimVar(SimConnectVariable)");
+            return reqId;
         }
 
         /// <summary>
@@ -767,15 +768,20 @@ namespace SimConnectHelper
         /// Set the value associated with a SimVar
         /// </summary>
         /// <param name="simVarValue">SimVar and associated value</param>
-        public static int SetSimVar(SimConnectVariableValue simVarValue)
+        public static int SetSimVar(SimConnectVariableValue simVarValue, bool disableAI = false)
         {
             WriteLog("Start SetSimVar(SimConnectVariableValue)");
             // As for requests, setting values is a 2-step process, reserve the data area,then modify the data it holds
-            GetSimVar(simVarValue.Request);
-
-            var reqId = GetRequestId(simVarValue.Request);
+            var reqId = GetSimVar(simVarValue.Request);
             if (reqId > -1)
             {
+                // Should we disable auto-updates by the AI?
+                if (disableAI)
+                {
+                    // We shall assume all SimVar updates will be in relation to the user's aircraft
+                    // SIMCONNECT_OBJECT_ID_USER
+                    simConnect.AIReleaseControl(SimConnect.SIMCONNECT_OBJECT_ID_USER, (SIMVARDEFINITION)reqId);
+                }
                 // Data area reserved, now set the value
                 simConnect.SetDataOnSimObject((SIMVARDEFINITION)reqId, SimConnect.SIMCONNECT_OBJECT_ID_USER, SIMCONNECT_DATA_SET_FLAG.DEFAULT, simVarValue.Value);
                 //simConnect.SetDataOnSimObject((SIMVARDEFINITION)reqId, (uint)reqId, (SIMCONNECT_DATA_SET_FLAG)SimConnect.SIMCONNECT_OBJECT_ID_USER, simVarValue.Value);

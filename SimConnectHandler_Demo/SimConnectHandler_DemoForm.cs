@@ -1,14 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Data;
-using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 using SimConnectHelper;
 using SimConnectHelper.Common;
@@ -96,7 +91,7 @@ namespace SimConnectHandler_DemoForm
         /// </summary>
         /// <param name="sender">SimConnect</param>
         /// <param name="e">Exception containing SimConnect error data</param>
-        private void SimError(object sender, IOException e)
+        private void SimError(object sender, ExternalException e)
         {
             var errorId = Convert.ToInt32(e.Data["dwID"]);
             var sendId = Convert.ToInt32(e.Data["dwSendID"]);
@@ -175,6 +170,7 @@ namespace SimConnectHandler_DemoForm
             //else
             txtSimVarValue.Enabled = true;
             cbReadOnly.Checked = simVar.Value.ReadOnly;
+            cbDisableAI.Checked = cbReadOnly.Checked;
         }
 
         private DataGridViewRow FindRowBySimVarName(string simVarName)
@@ -243,7 +239,7 @@ namespace SimConnectHandler_DemoForm
                         Request = variableRequest,
                         Value = value
                     };
-                    reqId = SendValue(variableValue);
+                    reqId = SendValue(variableValue, cbDisableAI.Checked);
                 }
                 dgVariables.Rows[rowIdx].Cells["ReqID"].Value = reqId;
             }
@@ -279,7 +275,8 @@ namespace SimConnectHandler_DemoForm
                         {
                             Request = request,
                             Value = value
-                        });
+                        },
+                        cbDisableAI.Checked);
                     }
                 }
             }
@@ -297,9 +294,9 @@ namespace SimConnectHandler_DemoForm
             }
         }
 
-        private int SendValue(SimConnectVariableValue variableValue)
+        private int SendValue(SimConnectVariableValue variableValue, bool disableAI = false)
         {
-            return SimConnectHandler.SetSimVar(variableValue);
+            return SimConnectHandler.SetSimVar(variableValue, disableAI);
         }
 
         private int SendRequest(SimConnectVariable request, int frequency)
