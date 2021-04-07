@@ -767,7 +767,7 @@ namespace SimConnectHelper
         /// Set the value associated with a SimVar
         /// </summary>
         /// <param name="simVarValue">SimVar and associated value</param>
-        public static int SetSimVar(SimConnectVariableValue simVarValue)
+        public static int SetSimVar(SimConnectVariableValue simVarValue, bool disableAI = false)
         {
             WriteLog("Start SetSimVar(SimConnectVariableValue)");
             // As for requests, setting values is a 2-step process, reserve the data area,then modify the data it holds
@@ -782,6 +782,11 @@ namespace SimConnectHelper
             }
             WriteLog("End SetSimVar(SimConnectVariableValue)");
             return reqId;
+        }
+
+        private static void DisableAI(SimConnectVariable simVar)
+        {
+
         }
 
         private static int GetRequestId(SimConnectVariable request)
