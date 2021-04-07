@@ -2,10 +2,13 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using SimConnectHelper;
 using SimConnectHelper.Common;
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 
@@ -180,7 +183,7 @@ namespace SimConnectHelper_Tests
             Assert.IsTrue(e);
         }
 
-        private void SimConnect_Error(object sender, IOException e)
+        private void SimConnect_Error(object sender, ExternalException e)
         {
             throw new NotImplementedException();
         }

@@ -8,6 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -57,7 +58,7 @@ namespace SimConnectHelper
         /// <summary>
         /// Called whenever SimConnect receives an error from MSFS 2020
         /// </summary>
-        public static EventHandler<IOException> SimError;
+        public static EventHandler<ExternalException> SimError;
         /// <summary>
         /// Called whenever MSFS 2020 transmits requested data about an object (e.g. SimVar result)
         /// </summary>
@@ -776,6 +777,11 @@ namespace SimConnectHelper
             var reqId = GetRequestId(simVarValue.Request);
             if (reqId > -1)
             {
+                if (disableAI)
+                {
+                    // We shall assume all SimVar updates will be in relation to the user's aircraft
+                    DisableAI(reqId);
+                }
                 // Data area reserved, now set the value
                 simConnect.SetDataOnSimObject((SIMVARDEFINITION)reqId, SimConnect.SIMCONNECT_OBJECT_ID_USER, SIMCONNECT_DATA_SET_FLAG.DEFAULT, simVarValue.Value);
                 //simConnect.SetDataOnSimObject((SIMVARDEFINITION)reqId, (uint)reqId, (SIMCONNECT_DATA_SET_FLAG)SimConnect.SIMCONNECT_OBJECT_ID_USER, simVarValue.Value);
@@ -784,9 +790,9 @@ namespace SimConnectHelper
             return reqId;
         }
 
-        private static void DisableAI(SimConnectVariable simVar)
+        public static void DisableAI(int requestId)
         {
-
+            simConnect.AIReleaseControl(SimConnect.SIMCONNECT_OBJECT_ID_USER, (SIMVARDEFINITION)requestId);
         }
 
         private static int GetRequestId(SimConnectVariable request)
@@ -802,7 +808,7 @@ namespace SimConnectHelper
         }
 
         /// <summary>
-        /// Every Windowws Message is captured here, we check for SimConnect messages and process them, else we ignore it
+        /// Every Windows Message is captured here, we check for SimConnect messages and process them, else we ignore it
         /// </summary>
         /// <param name="sender">Windows Object generating the message</param>
         /// <param name="msg">Message from sender</param>

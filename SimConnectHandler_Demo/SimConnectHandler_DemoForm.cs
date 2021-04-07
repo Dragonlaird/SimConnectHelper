@@ -245,7 +245,6 @@ namespace SimConnectHandler_DemoForm
                 }
                 dgVariables.Rows[rowIdx].Cells["ReqID"].Value = reqId;
             }
-
         }
 
         private void dgvButton_Click(object sender, DataGridViewCellEventArgs e)
@@ -277,7 +276,7 @@ namespace SimConnectHandler_DemoForm
                         {
                             Request = request,
                             Value = value
-                        });
+                        }, cbDisableAI.Checked);
                     }
                 }
             }
@@ -295,7 +294,7 @@ namespace SimConnectHandler_DemoForm
             }
         }
 
-        private int SendValue(SimConnectVariableValue variableValue)
+        private int SendValue(SimConnectVariableValue variableValue, bool disableAI = false)
         {
             return SimConnectHelper.SimConnectHelper.SetSimVar(variableValue, disableAI);
         }

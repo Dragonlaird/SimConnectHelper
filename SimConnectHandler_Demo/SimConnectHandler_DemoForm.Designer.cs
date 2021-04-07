@@ -38,6 +38,7 @@ namespace SimConnectHandler_DemoForm
             this.cbConnected = new System.Windows.Forms.CheckBox();
             this.gpConnect = new System.Windows.Forms.GroupBox();
             this.gpRequest = new System.Windows.Forms.GroupBox();
+            this.cbDisableAI = new System.Windows.Forms.CheckBox();
             this.lblMilliseconds = new System.Windows.Forms.Label();
             this.txtMilliseconds = new System.Windows.Forms.NumericUpDown();
             this.cmbFrequency = new System.Windows.Forms.ComboBox();
@@ -155,6 +156,7 @@ namespace SimConnectHandler_DemoForm
             // 
             // gpRequest
             // 
+            this.gpRequest.Controls.Add(this.cbDisableAI);
             this.gpRequest.Controls.Add(this.lblMilliseconds);
             this.gpRequest.Controls.Add(this.txtMilliseconds);
             this.gpRequest.Controls.Add(this.cmbFrequency);
@@ -176,10 +178,20 @@ namespace SimConnectHandler_DemoForm
             this.gpRequest.TabStop = false;
             this.gpRequest.Text = "Request";
             // 
+            // cbDisableAI
+            // 
+            this.cbDisableAI.AutoSize = true;
+            this.cbDisableAI.Location = new System.Drawing.Point(179, 149);
+            this.cbDisableAI.Name = "cbDisableAI";
+            this.cbDisableAI.Size = new System.Drawing.Size(83, 19);
+            this.cbDisableAI.TabIndex = 14;
+            this.cbDisableAI.Text = "Disable AI?";
+            this.cbDisableAI.UseVisualStyleBackColor = true;
+            // 
             // lblMilliseconds
             // 
             this.lblMilliseconds.AutoSize = true;
-            this.lblMilliseconds.Location = new System.Drawing.Point(273, 118);
+            this.lblMilliseconds.Location = new System.Drawing.Point(273, 104);
             this.lblMilliseconds.Name = "lblMilliseconds";
             this.lblMilliseconds.Size = new System.Drawing.Size(73, 15);
             this.lblMilliseconds.TabIndex = 13;
@@ -188,7 +200,7 @@ namespace SimConnectHandler_DemoForm
             // txtMilliseconds
             // 
             this.txtMilliseconds.Enabled = false;
-            this.txtMilliseconds.Location = new System.Drawing.Point(192, 115);
+            this.txtMilliseconds.Location = new System.Drawing.Point(192, 101);
             this.txtMilliseconds.Maximum = new decimal(new int[] {
             3000,
             0,
@@ -212,7 +224,7 @@ namespace SimConnectHandler_DemoForm
             // 
             this.cmbFrequency.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cmbFrequency.FormattingEnabled = true;
-            this.cmbFrequency.Location = new System.Drawing.Point(65, 115);
+            this.cmbFrequency.Location = new System.Drawing.Point(65, 101);
             this.cmbFrequency.Name = "cmbFrequency";
             this.cmbFrequency.Size = new System.Drawing.Size(121, 23);
             this.cmbFrequency.TabIndex = 11;
@@ -221,7 +233,7 @@ namespace SimConnectHandler_DemoForm
             // lblFrequency
             // 
             this.lblFrequency.AutoSize = true;
-            this.lblFrequency.Location = new System.Drawing.Point(25, 118);
+            this.lblFrequency.Location = new System.Drawing.Point(25, 104);
             this.lblFrequency.Name = "lblFrequency";
             this.lblFrequency.Size = new System.Drawing.Size(33, 15);
             this.lblFrequency.TabIndex = 10;
@@ -229,7 +241,7 @@ namespace SimConnectHandler_DemoForm
             // 
             // txtDescription
             // 
-            this.txtDescription.Location = new System.Drawing.Point(65, 58);
+            this.txtDescription.Location = new System.Drawing.Point(65, 44);
             this.txtDescription.Name = "txtDescription";
             this.txtDescription.ReadOnly = true;
             this.txtDescription.Size = new System.Drawing.Size(310, 23);
@@ -238,7 +250,7 @@ namespace SimConnectHandler_DemoForm
             // lblDescription
             // 
             this.lblDescription.AutoSize = true;
-            this.lblDescription.Location = new System.Drawing.Point(24, 63);
+            this.lblDescription.Location = new System.Drawing.Point(24, 49);
             this.lblDescription.Name = "lblDescription";
             this.lblDescription.Size = new System.Drawing.Size(35, 15);
             this.lblDescription.TabIndex = 8;
@@ -248,7 +260,7 @@ namespace SimConnectHandler_DemoForm
             // 
             this.cbReadOnly.AutoSize = true;
             this.cbReadOnly.Enabled = false;
-            this.cbReadOnly.Location = new System.Drawing.Point(179, 147);
+            this.cbReadOnly.Location = new System.Drawing.Point(179, 131);
             this.cbReadOnly.Name = "cbReadOnly";
             this.cbReadOnly.Size = new System.Drawing.Size(85, 19);
             this.cbReadOnly.TabIndex = 7;
@@ -258,7 +270,7 @@ namespace SimConnectHandler_DemoForm
             // txtSimVarValue
             // 
             this.txtSimVarValue.Enabled = false;
-            this.txtSimVarValue.Location = new System.Drawing.Point(65, 144);
+            this.txtSimVarValue.Location = new System.Drawing.Point(65, 137);
             this.txtSimVarValue.Name = "txtSimVarValue";
             this.txtSimVarValue.Size = new System.Drawing.Size(107, 23);
             this.txtSimVarValue.TabIndex = 6;
@@ -266,7 +278,7 @@ namespace SimConnectHandler_DemoForm
             // lblSimVarValue
             // 
             this.lblSimVarValue.AutoSize = true;
-            this.lblSimVarValue.Location = new System.Drawing.Point(21, 147);
+            this.lblSimVarValue.Location = new System.Drawing.Point(21, 140);
             this.lblSimVarValue.Name = "lblSimVarValue";
             this.lblSimVarValue.Size = new System.Drawing.Size(38, 15);
             this.lblSimVarValue.TabIndex = 5;
@@ -274,7 +286,7 @@ namespace SimConnectHandler_DemoForm
             // 
             // txtUnit
             // 
-            this.txtUnit.Location = new System.Drawing.Point(65, 86);
+            this.txtUnit.Location = new System.Drawing.Point(65, 72);
             this.txtUnit.Name = "txtUnit";
             this.txtUnit.ReadOnly = true;
             this.txtUnit.Size = new System.Drawing.Size(310, 23);
@@ -283,7 +295,7 @@ namespace SimConnectHandler_DemoForm
             // lblUnit
             // 
             this.lblUnit.AutoSize = true;
-            this.lblUnit.Location = new System.Drawing.Point(27, 90);
+            this.lblUnit.Location = new System.Drawing.Point(27, 76);
             this.lblUnit.Name = "lblUnit";
             this.lblUnit.Size = new System.Drawing.Size(32, 15);
             this.lblUnit.TabIndex = 3;
@@ -303,7 +315,7 @@ namespace SimConnectHandler_DemoForm
             // 
             this.cmbVariable.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cmbVariable.FormattingEnabled = true;
-            this.cmbVariable.Location = new System.Drawing.Point(65, 30);
+            this.cmbVariable.Location = new System.Drawing.Point(65, 16);
             this.cmbVariable.Name = "cmbVariable";
             this.cmbVariable.Size = new System.Drawing.Size(310, 23);
             this.cmbVariable.TabIndex = 1;
@@ -312,7 +324,7 @@ namespace SimConnectHandler_DemoForm
             // lblVariable
             // 
             this.lblVariable.AutoSize = true;
-            this.lblVariable.Location = new System.Drawing.Point(8, 33);
+            this.lblVariable.Location = new System.Drawing.Point(8, 19);
             this.lblVariable.Name = "lblVariable";
             this.lblVariable.Size = new System.Drawing.Size(51, 15);
             this.lblVariable.TabIndex = 0;
@@ -480,5 +492,6 @@ namespace SimConnectHandler_DemoForm
         private System.Windows.Forms.DataGridViewCheckBoxColumn VarIsReadOnly;
         private System.Windows.Forms.DataGridViewButtonColumn SimVarUpdate;
         private System.Windows.Forms.DataGridViewButtonColumn SimVarDelete;
+        private System.Windows.Forms.CheckBox cbDisableAI;
     }
 }
