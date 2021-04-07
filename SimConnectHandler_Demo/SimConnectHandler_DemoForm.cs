@@ -7,8 +7,6 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 using SimConnectHelper;
 using SimConnectHelper.Common;
@@ -96,7 +94,7 @@ namespace SimConnectHandler_DemoForm
         /// </summary>
         /// <param name="sender">SimConnect</param>
         /// <param name="e">Exception containing SimConnect error data</param>
-        private void SimError(object sender, IOException e)
+        private void SimError(object sender, ExternalException e)
         {
             var errorId = Convert.ToInt32(e.Data["dwID"]);
             var sendId = Convert.ToInt32(e.Data["dwSendID"]);
