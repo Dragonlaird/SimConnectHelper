@@ -241,7 +241,7 @@ namespace SimConnectHandler_DemoForm
                         Request = variableRequest,
                         Value = value
                     };
-                    reqId = SendValue(variableValue);
+                    reqId = SendValue(variableValue, cbDisableAI.Checked);
                 }
                 dgVariables.Rows[rowIdx].Cells["ReqID"].Value = reqId;
             }

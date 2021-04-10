@@ -314,7 +314,7 @@ namespace SimConnectHelper
             if (SimError != null)
                 try
                 {
-                    var ex = new IOException("SimConnect returned an Error, details in Data", null);
+                    var ex = new ExternalException("SimConnect returned an Error, details in Data", null);
                     ex.Source = "SimConnect";
                     ex.Data.Add("data", data);
                     foreach (var property in data.GetType().GetFields())
