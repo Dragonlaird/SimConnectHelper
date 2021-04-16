@@ -2,11 +2,20 @@
 
   <PropertyGroup>
     <OutputType>Library</OutputType>
-    <TargetFramework>net5.0-windows</TargetFramework>
-    <!--<TargetFramework>net5.0</TargetFramework>-->
+    <TargetFramework>net5.0-windows7.0</TargetFramework>
     <UseWindowsForms>true</UseWindowsForms>
-    <SignAssembly>false</SignAssembly>
+    <SignAssembly>true</SignAssembly>
     <Platforms>x64</Platforms>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <AppxAutoIncrementPackageRevision>True</AppxAutoIncrementPackageRevision>
+    <Version>1.0.8</Version>
+    <Authors>Dragonlaird</Authors>
+    <Company />
+    <Description>A static object with simple methods, properties and events for communicating with MSFS 2020</Description>
+    <PackageProjectUrl>https://github.com/Dragonlaird/SimConnectHelper</PackageProjectUrl>
+    <AssemblyVersion>1.0.8.0</AssemblyVersion>
+    <FileVersion>1.0.8.0</FileVersion>
+    <DelaySign>false</DelaySign>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -19,17 +28,21 @@
 
   <ItemGroup>
     <Reference Include="Microsoft.FlightSimulator.SimConnect">
-      <HintPath>.\Microsoft.FlightSimulator.SimConnect.dll</HintPath>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <HintPath>$(MSFS SDK)\SimConnect SDK\lib\managed\Microsoft.FlightSimulator.SimConnect.dll</HintPath>
     </Reference>
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="Microsoft.FlightSimulator.SimConnect.dll">
+    <Content Include="C:\MSFS SDK\SimConnect SDK\lib\managed\Microsoft.FlightSimulator.SimConnect.dll">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="SimConnect.dll">
+      <Pack>true</Pack>
+      <PackagePath>lib\$(TargetFramework)</PackagePath>
+    </Content>
+    <Content Include="C:\MSFS SDK\SimConnect SDK\lib\SimConnect.dll">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
+      <Pack>true</Pack>
+      <PackagePath>lib\$(TargetFramework)</PackagePath>
+    </Content>
   </ItemGroup>
-
 </Project>
