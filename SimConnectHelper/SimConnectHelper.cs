@@ -525,7 +525,7 @@ namespace SimConnectHelper
                             simConnect.RegisterDataDefineStruct<int>(simReq.DefID);
                             break;
                         case "System.Boolean":
-                            simConnect.RegisterDataDefineStruct<bool>(simReq.DefID);
+                            simConnect.RegisterDataDefineStruct<int>(simReq.DefID);
                             break;
                         case "System.Byte":
                             simConnect.RegisterDataDefineStruct<byte>(simReq.DefID);
@@ -633,8 +633,8 @@ namespace SimConnectHelper
                         var requestId = submittedRequest.Key;
                         if (requestId > -1)
                         {
-                            //simConnect.ClearDataDefinition((SIMVARDEFINITION)requestId);
-                            simConnect.ClearClientDataDefinition((SIMVARDEFINITION)requestId);
+                            simConnect.ClearDataDefinition((SIMVARDEFINITION)requestId);
+                            //simConnect.ClearClientDataDefinition((SIMVARDEFINITION)requestId);
                             Requests.Remove(requestId);
                             RemoveTimer(requestId);
                             result = true;
@@ -792,7 +792,9 @@ namespace SimConnectHelper
 
         public static void DisableAI(int requestId)
         {
-            simConnect.AIReleaseControl(SimConnect.SIMCONNECT_OBJECT_ID_USER, (SIMVARDEFINITION)requestId);
+            WriteLog("Start DisableAI(int)");
+            simConnect.AIReleaseControl(SimConnect.SIMCONNECT_OBJECT_ID_USER, (SIMVARREQUEST)requestId);
+            WriteLog("End DisableAI(int)");
         }
 
         private static int GetRequestId(SimConnectVariable request)

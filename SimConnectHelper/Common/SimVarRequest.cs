@@ -8,11 +8,13 @@ using System.Threading.Tasks;
 namespace SimConnectHelper.Common
 {
     [System.Diagnostics.DebuggerDisplay("\\{SimVarRequest\\} {Name}")]
-    internal class SimVarRequest
+    public class SimVarRequest
     {
         internal int ID { get; set; }
 
-        internal SimConnectVariable Request { get; set; }
+        public SimConnectVariable Request { get; set; }
+
+        public object Value { get; set; }
         internal Type DataType => SimVarUnits.DefaultUnits[this.Request.Name].UnitType;
         internal SIMCONNECT_DATATYPE SimType
         {

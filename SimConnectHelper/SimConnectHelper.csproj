@@ -2,13 +2,13 @@
 
   <PropertyGroup>
     <OutputType>Library</OutputType>
-    <TargetFramework>net5.0-windows7.0</TargetFramework>
+    <TargetFramework>netcoreapp3.0</TargetFramework>
     <UseWindowsForms>true</UseWindowsForms>
     <SignAssembly>true</SignAssembly>
     <Platforms>x64</Platforms>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <AppxAutoIncrementPackageRevision>True</AppxAutoIncrementPackageRevision>
-    <Version>1.0.8</Version>
+    <Version>1.1.0</Version>
     <Authors>Dragonlaird</Authors>
     <Company />
     <Description>A static object with simple methods, properties and events for communicating with MSFS 2020</Description>
@@ -34,12 +34,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="C:\MSFS SDK\SimConnect SDK\lib\managed\Microsoft.FlightSimulator.SimConnect.dll">
+    <Content Include="\MSFS SDK\SimConnect SDK\lib\managed\Microsoft.FlightSimulator.SimConnect.dll">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <Pack>true</Pack>
       <PackagePath>lib\$(TargetFramework)</PackagePath>
     </Content>
-    <Content Include="C:\MSFS SDK\SimConnect SDK\lib\SimConnect.dll">
+    <Content Include="\MSFS SDK\SimConnect SDK\lib\SimConnect.dll">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <Pack>true</Pack>
       <PackagePath>lib\$(TargetFramework)</PackagePath>

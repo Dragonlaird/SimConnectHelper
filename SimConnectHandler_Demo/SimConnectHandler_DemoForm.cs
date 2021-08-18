@@ -8,6 +8,7 @@ using System.Linq;
 using System.Net;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
+using SimConnectHandler_Demo;
 using SimConnectHelper;
 using SimConnectHelper.Common;
 
@@ -21,6 +22,8 @@ namespace SimConnectHandler_DemoForm
         {
             InitializeComponent();
             Initialize();
+            FARyoufly_Sample sample = new FARyoufly_Sample();
+            sample.Main();
         }
 
         private void Initialize()
