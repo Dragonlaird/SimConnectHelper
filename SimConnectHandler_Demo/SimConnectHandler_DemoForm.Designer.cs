@@ -38,6 +38,8 @@ namespace SimConnectHandler_DemoForm
             this.cbConnected = new System.Windows.Forms.CheckBox();
             this.gpConnect = new System.Windows.Forms.GroupBox();
             this.gpRequest = new System.Windows.Forms.GroupBox();
+            this.cmbIndex = new System.Windows.Forms.ComboBox();
+            this.lblIndex = new System.Windows.Forms.Label();
             this.cbDisableAI = new System.Windows.Forms.CheckBox();
             this.lblMilliseconds = new System.Windows.Forms.Label();
             this.txtMilliseconds = new System.Windows.Forms.NumericUpDown();
@@ -156,6 +158,8 @@ namespace SimConnectHandler_DemoForm
             // 
             // gpRequest
             // 
+            this.gpRequest.Controls.Add(this.cmbIndex);
+            this.gpRequest.Controls.Add(this.lblIndex);
             this.gpRequest.Controls.Add(this.cbDisableAI);
             this.gpRequest.Controls.Add(this.lblMilliseconds);
             this.gpRequest.Controls.Add(this.txtMilliseconds);
@@ -177,6 +181,30 @@ namespace SimConnectHandler_DemoForm
             this.gpRequest.TabIndex = 7;
             this.gpRequest.TabStop = false;
             this.gpRequest.Text = "Request";
+            // 
+            // cmbIndex
+            // 
+            this.cmbIndex.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cmbIndex.FormattingEnabled = true;
+            this.cmbIndex.Items.AddRange(new object[] {
+            "",
+            "1",
+            "2",
+            "3",
+            "4"});
+            this.cmbIndex.Location = new System.Drawing.Point(313, 19);
+            this.cmbIndex.Name = "cmbIndex";
+            this.cmbIndex.Size = new System.Drawing.Size(62, 23);
+            this.cmbIndex.TabIndex = 16;
+            // 
+            // lblIndex
+            // 
+            this.lblIndex.AutoSize = true;
+            this.lblIndex.Location = new System.Drawing.Point(267, 19);
+            this.lblIndex.Name = "lblIndex";
+            this.lblIndex.Size = new System.Drawing.Size(39, 15);
+            this.lblIndex.TabIndex = 15;
+            this.lblIndex.Text = "Index:";
             // 
             // cbDisableAI
             // 
@@ -317,7 +345,7 @@ namespace SimConnectHandler_DemoForm
             this.cmbVariable.FormattingEnabled = true;
             this.cmbVariable.Location = new System.Drawing.Point(65, 16);
             this.cmbVariable.Name = "cmbVariable";
-            this.cmbVariable.Size = new System.Drawing.Size(310, 23);
+            this.cmbVariable.Size = new System.Drawing.Size(197, 23);
             this.cmbVariable.TabIndex = 1;
             this.cmbVariable.SelectedIndexChanged += new System.EventHandler(this.Variable_Changed);
             // 
@@ -493,5 +521,7 @@ namespace SimConnectHandler_DemoForm
         private System.Windows.Forms.DataGridViewButtonColumn SimVarUpdate;
         private System.Windows.Forms.DataGridViewButtonColumn SimVarDelete;
         private System.Windows.Forms.CheckBox cbDisableAI;
+        private System.Windows.Forms.ComboBox cmbIndex;
+        private System.Windows.Forms.Label lblIndex;
     }
 }

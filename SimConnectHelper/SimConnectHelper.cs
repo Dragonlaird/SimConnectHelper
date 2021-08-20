@@ -511,7 +511,14 @@ namespace SimConnectHelper
                 // Submit the SimVar request to SimConnect
                 try
                 {
-                    simConnect.AddToDataDefinition(simReq.DefID, request.Name, unit, simReq.SimType, 0.0f, SimConnect.SIMCONNECT_UNUSED);
+                    var simVarName = request.Name;
+                    double index = 0;
+                    if (simVarName.IndexOf(':') > -1)
+                    {
+                        index = double.Parse(simVarName.Substring(simVarName.IndexOf(':') + 1));
+                        simVarName = simVarName.Substring(0, simVarName.IndexOf(':'));
+                    }
+                    simConnect.AddToDataDefinition(simReq.DefID, simVarName, unit, simReq.SimType, 0.0f, SimConnect.SIMCONNECT_UNUSED);
                     // Tell SimConnect what type of value we are expecting to be returned
                     switch (simReq.DataType?.FullName)
                     {

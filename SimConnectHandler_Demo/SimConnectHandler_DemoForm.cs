@@ -191,7 +191,8 @@ namespace SimConnectHandler_DemoForm
         private void pbSendRequest_Click(object sender, EventArgs e)
         {
             var selectedItem = (KeyValuePair<string, SimVarDefinition>)cmbVariable.SelectedItem;
-            var simVarName = selectedItem.Key;
+            var index = cmbIndex.SelectedItem.ToString();
+            var simVarName = selectedItem.Key + (string.IsNullOrEmpty(index) ? "" : (":" + index));
             var simVarDefinition = selectedItem.Value;
             bool bCanSendRequest = FindRowBySimVarName(simVarName) == null;
             if (bCanSendRequest)

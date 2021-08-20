@@ -10,15 +10,28 @@ namespace SimConnectHelper.Common
     [System.Diagnostics.DebuggerDisplay("\\{SimVarRequest\\} {Name}")]
     internal class SimVarRequest
     {
+        private string simVarName { get
+            {
+                if (this.Request == null)
+                    return null;
+                var simVarName = this.Request.Name;
+                if (!string.IsNullOrEmpty(simVarName) && simVarName.IndexOf(':') > -1)
+                    simVarName = simVarName.Substring(0, simVarName.IndexOf(':'));
+                return simVarName;
+            } 
+        }
+
         internal int ID { get; set; }
 
         internal SimConnectVariable Request { get; set; }
-        internal Type DataType => SimVarUnits.DefaultUnits[this.Request.Name].UnitType;
+
+        internal Type DataType => SimVarUnits.DefaultUnits[simVarName].UnitType;
+
         internal SIMCONNECT_DATATYPE SimType
         {
             get
             {
-                return SimVarUnits.GetSimVarType(this.DataType?.ToString() ?? SimVarUnits.DefaultUnits[this.Request.Name].DefaultUnit);
+                return SimVarUnits.GetSimVarType(this.DataType?.ToString() ?? SimVarUnits.DefaultUnits[simVarName].DefaultUnit);
             }
         }
 
