@@ -25,7 +25,9 @@ namespace SimConnectHelper.Common
 
         internal SimConnectVariable Request { get; set; }
 
-        internal Type DataType => SimVarUnits.DefaultUnits[simVarName].UnitType;
+        internal Type DataType => SimVarUnits.DefaultUnits.Any(x => x.Key == simVarName) ?
+            SimVarUnits.DefaultUnits[simVarName].UnitType : 
+            typeof(string);
 
         internal SIMCONNECT_DATATYPE SimType
         {
