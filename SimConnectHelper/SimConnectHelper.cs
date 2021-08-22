@@ -34,6 +34,7 @@ namespace SimConnectHelper
         private static int RequestID = 0;
         private static List<System.Threading.Timer> timers = new List<System.Threading.Timer>();
         private static List<SimVarTimer> timerStates = new List<SimVarTimer>();
+        private static string SimConnect_XML_Path { get; set; }
         public static Dictionary<int, SimConnectVariable> Requests { get; private set; } = new Dictionary<int, SimConnectVariable>();
         /// <summary>
         /// Allow connections to older MSFS applications (untested)
@@ -843,11 +844,23 @@ namespace SimConnectHelper
         private static string GetConfigFilePath()
         {
             WriteLog("Start GetConfigFilePath()");
-            // Need to confirm the correct locaion for SimConnct.cfg.
+            // Need to confirm the correct location for SimConnct.cfg.
             // Some documentation states it is in the AppData folder, others within the current folder, others still state the My Documents folder
             //var filePath = Path.Combine(Environment.GetEnvironmentVariable("APPDATA"), "Microsoft Flight Simulator", "SimConnect.cfg");
             WriteLog("End GetConfigFilePath()");
             return ConfigFilePath;
+        }
+
+        private static string GetSimVarXMLPath()
+        {
+            if (!string.IsNullOrEmpty(SimConnect_XML_Path))
+                return SimConnect_XML_Path;
+            var searchOption = SearchOption.AllDirectories;
+            
+            var file = Directory.GetFiles(Environment.GetEnvironmentVariable("APPDATA"), "SimConnect.xml", searchOption).FirstOrDefault();
+            if (file != null)
+                SimConnect_XML_Path = file;
+            return SimConnect_XML_Path;
         }
 
         /// <summary>
@@ -860,8 +873,7 @@ namespace SimConnectHelper
             List<SimConnectConfig> configs = new List<SimConnectConfig>();
             try
             {
-                var filePath = Path.Combine(Environment.GetEnvironmentVariable("APPDATA"), "Microsoft Flight Simulator", "SimConnect.xml");
-                var fileContent = File.ReadAllText(filePath); // Load the file content instead of loading as XML - overcomes limitation with encoding
+                var fileContent = File.ReadAllText(GetSimVarXMLPath()); // Load the file content instead of loading as XML - overcomes limitation with encoding
                 XmlDocument xml = new XmlDocument();
                 xml.LoadXml(fileContent);
                 XmlNodeList xmlNodeList = xml.SelectNodes("/SimBase.Document/SimConnect.Comm");

@@ -135,7 +135,7 @@ namespace SimConnectHelper_Tests
             Assert.IsNotNull(result);
         }
 
-        [TestMethod]
+        //[TestMethod]
         public void GetEverySimVar()
         {
             List<SimConnectVariable> failures = new List<SimConnectVariable>();
