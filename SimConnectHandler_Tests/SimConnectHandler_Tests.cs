@@ -1,6 +1,6 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using SimConnectHelper;
-using SimConnectHelper.Common;
+using MSFS_Sim;
+using MSFS_Sim.Common;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -28,48 +28,48 @@ namespace SimConnectHelper_Tests
         [TestMethod]
         public void ConnectUseLocalServerConfig_Test()
         {
-            SimConnectHelper.SimConnectHelper.Connect(); // Find/Try all defined server connection configurations
-            Assert.IsTrue(SimConnectHelper.SimConnectHelper.IsConnected);
+            SimConnectHelper.Connect(); // Find/Try all defined server connection configurations
+            Assert.IsTrue(SimConnectHelper.IsConnected);
         }
 
         [TestMethod]
         public void Disconnect_Test()
         {
-            SimConnectHelper.SimConnectHelper.Connect(); // Find/Try all defined server connection configurations
-            Assert.IsTrue(SimConnectHelper.SimConnectHelper.IsConnected);
-            SimConnectHelper.SimConnectHelper.Disconnect();
-            Assert.IsFalse(SimConnectHelper.SimConnectHelper.IsConnected);
+            SimConnectHelper.Connect(); // Find/Try all defined server connection configurations
+            Assert.IsTrue(SimConnectHelper.IsConnected);
+            SimConnectHelper.Disconnect();
+            Assert.IsFalse(SimConnectHelper.IsConnected);
         }
 
         [TestMethod]
         public void ConnectConfiguration_Test()
         {
-            SimConnectHelper.SimConnectHelper.Connect(); // Find/Try all defined server connection configurations
-            Assert.AreNotEqual(SimConnectHelper.SimConnectHelper.Connection.Port, "0");
+            SimConnectHelper.Connect(); // Find/Try all defined server connection configurations
+            Assert.AreNotEqual(SimConnectHelper.Connection.Port, "0");
         }
 
         [TestMethod]
         public void ConnectViaIP_Test()
         {
-            SimConnectHelper.SimConnectHelper.Connect(GetEndPoint());
+            SimConnectHelper.Connect(GetEndPoint());
             Thread.Sleep(1000);
-            Assert.IsTrue(SimConnectHelper.SimConnectHelper.IsConnected);
+            Assert.IsTrue(SimConnectHelper.IsConnected);
         }
 
         [TestMethod]
         public void RequestSimVar_Test_In_Ms()
         {
             result = null;
-            SimConnectHelper.SimConnectHelper.SimError += SimConnect_Error;
-            SimConnectHelper.SimConnectHelper.SimConnected += SimConnect_Connection;
-            SimConnectHelper.SimConnectHelper.SimData += SimConnect_DataReceived;
-            SimConnectHelper.SimConnectHelper.Connect();
+            SimConnectHelper.SimError += SimConnect_Error;
+            SimConnectHelper.SimConnected += SimConnect_Connection;
+            SimConnectHelper.SimData += SimConnect_DataReceived;
+            SimConnectHelper.Connect();
             var variable = new SimConnectVariable
             {
                 Name = "AMBIENT WIND VELOCITY",
                 Unit = "knots"
             };
-            var requestID = SimConnectHelper.SimConnectHelper.GetSimVar(variable, 50);
+            var requestID = SimConnectHelper.GetSimVar(variable, 50);
 
             // Wait up to 5 seconds for MSFS to return the requested value
             DateTime endTime = DateTime.Now.AddSeconds(5);
@@ -77,8 +77,8 @@ namespace SimConnectHelper_Tests
             {
                 Thread.Sleep(100);
             }
-            SimConnectHelper.SimConnectHelper.CancelRequest(variable);
-            SimConnectHelper.SimConnectHelper.Disconnect();
+            SimConnectHelper.CancelRequest(variable);
+            SimConnectHelper.Disconnect();
             Assert.IsNotNull(result);
         }
 
@@ -87,16 +87,16 @@ namespace SimConnectHelper_Tests
         public void RequestSimVar_Test_Once()
         {
             result = null;
-            SimConnectHelper.SimConnectHelper.SimError += SimConnect_Error;
-            SimConnectHelper.SimConnectHelper.SimConnected += SimConnect_Connection;
-            SimConnectHelper.SimConnectHelper.SimData += SimConnect_DataReceived;
-            SimConnectHelper.SimConnectHelper.Connect();
+            SimConnectHelper.SimError += SimConnect_Error;
+            SimConnectHelper.SimConnected += SimConnect_Connection;
+            SimConnectHelper.SimData += SimConnect_DataReceived;
+            SimConnectHelper.Connect();
             var variable = new SimConnectVariable
             {
                 Name = "AMBIENT WIND VELOCITY",
                 Unit = "knots"
             };
-            var requestID = SimConnectHelper.SimConnectHelper.RegisterSimVar(variable, SimConnectUpdateFrequency.Once);
+            var requestID = SimConnectHelper.RegisterSimVar(variable, SimConnectUpdateFrequency.Once);
 
             // Wait up to 5 seconds for MSFS to return the requested value
             DateTime endTime = DateTime.Now.AddSeconds(5);
@@ -104,8 +104,8 @@ namespace SimConnectHelper_Tests
             {
                 Thread.Sleep(100);
             }
-            SimConnectHelper.SimConnectHelper.CancelRequest(variable);
-            SimConnectHelper.SimConnectHelper.Disconnect();
+            SimConnectHelper.CancelRequest(variable);
+            SimConnectHelper.Disconnect();
             Assert.IsNotNull(result);
         }
 
@@ -113,16 +113,16 @@ namespace SimConnectHelper_Tests
         public void RequestSimVar_Test_SimFrame()
         {
             result = null;
-            SimConnectHelper.SimConnectHelper.SimError += SimConnect_Error;
-            SimConnectHelper.SimConnectHelper.SimConnected += SimConnect_Connection;
-            SimConnectHelper.SimConnectHelper.SimData += SimConnect_DataReceived;
-            SimConnectHelper.SimConnectHelper.Connect();
+            SimConnectHelper.SimError += SimConnect_Error;
+            SimConnectHelper.SimConnected += SimConnect_Connection;
+            SimConnectHelper.SimData += SimConnect_DataReceived;
+            SimConnectHelper.Connect();
             var variable = new SimConnectVariable
             {
                 Name = "AMBIENT WIND VELOCITY",
                 Unit = "knots"
             };
-            var requestID = SimConnectHelper.SimConnectHelper.RegisterSimVar(variable, SimConnectUpdateFrequency.SIM_Frame);
+            var requestID = SimConnectHelper.RegisterSimVar(variable, SimConnectUpdateFrequency.SIM_Frame);
 
             // Wait up to 5 seconds for MSFS to return the requested value
             DateTime endTime = DateTime.Now.AddSeconds(5);
@@ -130,8 +130,8 @@ namespace SimConnectHelper_Tests
             {
                 Thread.Sleep(100);
             }
-            SimConnectHelper.SimConnectHelper.CancelRequest(variable);
-            SimConnectHelper.SimConnectHelper.Disconnect();
+            SimConnectHelper.CancelRequest(variable);
+            SimConnectHelper.Disconnect();
             Assert.IsNotNull(result);
         }
 
@@ -142,20 +142,20 @@ namespace SimConnectHelper_Tests
             const int frequency = (int)SimConnectUpdateFrequency.Once;
             const int resultDelayCheckMilliseconds = 5;
             const int maxWaitForResultMilliseconds = 1000;
-            SimConnectHelper.SimConnectHelper.Disconnect();
-            SimConnectHelper.SimConnectHelper.SimError += SimConnect_Error;
-            SimConnectHelper.SimConnectHelper.SimConnected += SimConnect_Connection;
-            SimConnectHelper.SimConnectHelper.SimData += SimConnect_DataReceived;
-            SimConnectHelper.SimConnectHelper.Connect();
+            SimConnectHelper.Disconnect();
+            SimConnectHelper.SimError += SimConnect_Error;
+            SimConnectHelper.SimConnected += SimConnect_Connection;
+            SimConnectHelper.SimData += SimConnect_DataReceived;
+            SimConnectHelper.Connect();
             foreach (var simVarDefinition in SimVarUnits.DefaultUnits)
             {
                 SimConnectVariable request = new SimConnectVariable { Name = simVarDefinition.Value.Name, Unit = simVarDefinition.Value.DefaultUnit };
-                int requestId = SimConnectHelper.SimConnectHelper.GetSimVar(request, frequency);
+                int requestId = SimConnectHelper.GetSimVar(request, frequency);
                 // -1 is the default value for a request that could not be sent - usually because SimConnect is not connected to MSFS 2020
                 Assert.AreNotEqual(-1, requestId);
                 // Ask SimConnect to fetch the latest value
                 result = null;
-                SimConnectHelper.SimConnectHelper.GetSimVar(requestId);
+                SimConnectHelper.GetSimVar(requestId);
                 var endWaitTime = DateTime.Now.AddMilliseconds(maxWaitForResultMilliseconds);
                 while (result == null && endWaitTime > DateTime.Now)
                 {
@@ -165,9 +165,9 @@ namespace SimConnectHelper_Tests
                 {
                     failures.Add(request);
                 }
-                SimConnectHelper.SimConnectHelper.CancelRequest(request);
+                SimConnectHelper.CancelRequest(request);
             }
-            SimConnectHelper.SimConnectHelper.Disconnect();
+            SimConnectHelper.Disconnect();
             foreach (var request in failures)
                 Debug.WriteLine(string.Format("{0} ({1})", request.Name, request.Unit));
             Assert.AreEqual(0, failures.Count());

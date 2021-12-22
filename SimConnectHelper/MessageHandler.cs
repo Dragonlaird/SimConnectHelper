@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace SimConnectHelper
+namespace MSFS_Sim
 {
     internal class MessageHandler : NativeWindow
     {

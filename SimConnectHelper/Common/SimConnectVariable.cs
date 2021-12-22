@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace SimConnectHelper.Common
+namespace MSFS_Sim.Common
 {
     public class SimConnectVariable
     {

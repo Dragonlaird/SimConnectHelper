@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SimConnectHelper.Common
+namespace MSFS_Sim.Common
 {
     [System.Diagnostics.DebuggerDisplay("\\{SimVarRequest\\} {Name}")]
     internal class SimVarRequest

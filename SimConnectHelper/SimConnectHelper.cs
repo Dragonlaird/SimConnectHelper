@@ -1,5 +1,5 @@
 ﻿using Microsoft.FlightSimulator.SimConnect;
-using SimConnectHelper.Common;
+using MSFS_Sim.Common;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -16,7 +16,7 @@ using System.Windows.Forms;
 using System.Xml;
 using System.Xml.Serialization;
 
-namespace SimConnectHelper
+namespace MSFS_Sim
 {
     /// <summary>
     /// Static class to connect/disconnect to MSFS 2020, via SimConnect
@@ -311,7 +311,7 @@ namespace SimConnectHelper
         /// <param name="data">Error details</param>
         private static void SimConnect_OnRecvException(SimConnect sender, SIMCONNECT_RECV_EXCEPTION data)
         {
-            WriteLog("Start SimConnect_OnRecvException(SimConnect, SIMCONNECT_RECV_EXCEPTION)");
+            WriteLog("Start SimConnect_OnRecvException(SimConnect, SIMCONNECT_RECV_EXCEPTION)", EventLogEntryType.Error);
             if (SimError != null)
                 try
                 {
@@ -447,7 +447,7 @@ namespace SimConnectHelper
                 {
                     WriteLog(string.Format("Message Receive Error: {0}", ex.Message), EventLogEntryType.Error);
                 }
-            WriteLog("End SimConnect_OnRecvException(SimConnect, SIMCONNECT_RECV_EXCEPTION)");
+            WriteLog("End SimConnect_OnRecvException(SimConnect, SIMCONNECT_RECV_EXCEPTION)", EventLogEntryType.Error);
         }
 
         /// <summary>
@@ -713,7 +713,8 @@ namespace SimConnectHelper
                     }
                     else
                     {
-                        SIMCONNECT_PERIOD period = Enum.Parse<SIMCONNECT_PERIOD>(frequency.ToString().ToUpper());
+                        //SIMCONNECT_PERIOD period = Enum.Parse<SIMCONNECT_PERIOD>(frequency.ToString().ToUpper());
+                        var period = (SIMCONNECT_PERIOD)frequency;
                         RegisterSimVar(Requests[requestID], SimConnectUpdateFrequency.Never);
                         simConnect?.RequestDataOnSimObject((SIMVARREQUEST)requestID, (SIMVARDEFINITION)requestID, 0, period, SIMCONNECT_DATA_REQUEST_FLAG.DEFAULT, 0, 0, 0);
                     }
@@ -805,7 +806,7 @@ namespace SimConnectHelper
 
         private static int GetRequestId(SimConnectVariable request)
         {
-            WriteLog("Start GetRequestId(SimConnectVariable);\r\nEnd GetRequestId(SimConnectVariable)");
+            WriteLog("Start/End GetRequestId(SimConnectVariable);");
             return Requests.Any(x =>
                 x.Value.Name.Equals(request.Name, StringComparison.InvariantCultureIgnoreCase)
                 && x.Value.Unit.Equals(request.Unit, StringComparison.InvariantCultureIgnoreCase)) ?

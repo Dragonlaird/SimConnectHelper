@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
 
-namespace SimConnectHelper.Common
+namespace MSFS_Sim.Common
 {
     [XmlRoot("SimConnect.Comm")]
     public class SimConnectConfig
