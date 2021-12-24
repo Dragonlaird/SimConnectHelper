@@ -113,13 +113,24 @@ namespace MSFS_Sim
                 Disconnect();
             Connection = config;
             CreateConfigFile(config);
-            source = new CancellationTokenSource();
+            if (source == null || source.IsCancellationRequested)
+                source = new CancellationTokenSource();
             token = source.Token;
-            token.ThrowIfCancellationRequested();
-            messagePump = new Task(RunMessagePump, token);
-            messagePump.Start();
-            messagePumpRunning = new AutoResetEvent(false);
-            messagePumpRunning.WaitOne();
+            if (!token.IsCancellationRequested)
+            {
+                messagePump = new Task(() =>
+                {
+                    RunMessagePump();
+                    while (token != CancellationToken.None && !token.IsCancellationRequested)
+                    {
+                        Thread.Sleep(50);
+                    }
+                    StopMessagePump();
+                }, token);
+                messagePump.Start();
+                messagePumpRunning = new AutoResetEvent(false);
+                messagePumpRunning.WaitOne();
+            }
             WriteLog("End Connect(SimConnectConfig)");
         }
 
@@ -144,11 +155,14 @@ namespace MSFS_Sim
             {
                 source.Cancel();
             }
-            if (messagePump != null)
+            if(handler != null)
             {
+                handler.MessageReceived -= MessageReceived;
                 handler.Stop();
                 handler = null;
-
+            }
+            if (messagePump != null)
+            {
                 messagePumpRunning.Close();
                 messagePumpRunning.Dispose();
             }
@@ -244,6 +258,7 @@ namespace MSFS_Sim
             {
                 // Is MSFS is not running, a COM Exception is raised. We ignore it!
                 WriteLog(string.Format("Connect Error: {0}", ex.Message), EventLogEntryType.Error);
+                StopMessagePump();
             }
             WriteLog("End ConnectFS(MessageHandler)");
         }

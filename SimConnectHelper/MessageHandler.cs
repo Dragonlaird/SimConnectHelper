@@ -36,6 +36,10 @@ namespace MSFS_Sim
 
         internal void Stop()
         {
+            // Release callback
+            
+            MessageReceived = null;
+            // Destroy the windows handle
             base.ReleaseHandle();
             base.DestroyHandle();
         }
